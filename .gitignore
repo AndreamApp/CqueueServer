@@ -1,0 +1,6 @@
+node_modules
+/data
+/.idea
+/main/cookies
+/proxy.js
+/doc
