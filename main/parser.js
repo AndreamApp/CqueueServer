@@ -439,6 +439,57 @@ Parser.prototype.parseExamsFromHTMLArr = async function parseExamsFromHTMLArr(ht
         ]
    返回Array<SemesterGrade>
  */
+
+/**
+ * calculate the gpa of this semester, under these rules:
+ * skip 未录入 item
+ * 优秀=95 良好=85 中等=75 合格=65 不合格=60
+ * TODO: 体育课和新生研讨课这些只有两级制：合格/不合格
+ * semester.gpa设置为保留两位有效数字的小数
+ * 返回gpa为float类型
+ */
+function calcGpa(semester){
+    let totalCredit = 0;
+    let totalGrade = 0;
+    for(let i = 0; i < semester.data.length; i++){
+        let credit = parseFloat(semester.data[i].credit);
+        let grade = 0;
+        switch (semester.data[i].grade){
+            case "未录入":
+                continue;
+            case "优秀":
+                grade = 95;
+                break;
+            case "良好":
+                grade = 85;
+                break;
+            case "中等":
+                grade = 75;
+                break;
+            case "合格":
+                grade = 85; // TODO
+                break;
+            case "不合格":
+                grade = 0;
+                break;
+            default:
+                grade = parseFloat(semester.data[i].grade, 10);
+                break;
+        }
+        if(grade < 60){
+            grade = 60;
+        }
+        if(grade > 90){
+            grade = 90;
+        }
+        totalCredit += credit;
+        totalGrade += credit * (grade - 50) / 10;
+    }
+    let gpa = totalGrade / totalCredit;
+    semester.gpa = gpa.toFixed(2);
+    return gpa;
+}
+
 Parser.prototype.parseGradesFromHTML = async function parseGradesFromHTML(text){
     let generalData = await new Promise(function (resolve, reject){
         let parser = new htmlparser.Parser(getGeneralTBodyParser(resolve, reject, []), {decodeEntities: true});
@@ -468,6 +519,8 @@ Parser.prototype.parseGradesFromHTML = async function parseGradesFromHTML(text){
             grade.grade = tr[6].value; // 78
             currSemester.data.push(grade);
         }
+        // 计算gpa
+        calcGpa(currSemester);
         gradeList.push(currSemester);
     }
     return gradeList;
@@ -479,17 +532,21 @@ async function synctest(){
     let parser = new Parser();
     console.time('parse');
 
-    let infoHtml = await crawler.info();
-    console.log(JSON.stringify(await parser.parseInfoFromHTML(infoHtml)));
+    await crawler.login('20151597', '976655');
 
-    let tableHtml = await crawler.table('20170');
-    console.log(JSON.stringify(await parser.parseTableFromHTML(tableHtml)));
+    // let infoHtml = await crawler.info();
+    // console.log(JSON.stringify(await parser.parseInfoFromHTML(infoHtml)));
 
-    let examsHtml = await crawler.exams('20170');
-    console.log(JSON.stringify(await parser.parseExamsFromHTMLArr(examsHtml)));
+    // let tableHtml = await crawler.table('20170');
+    // console.log(JSON.stringify(await parser.parseTableFromHTML(tableHtml)));
+
+    // let examsHtml = await crawler.exams('20170');
+    // console.log(JSON.stringify(await parser.parseExamsFromHTMLArr(examsHtml)));
 
     let gradeHtml = await crawler.grade();
     console.log(JSON.stringify(await parser.parseGradesFromHTML(gradeHtml)));
+
+    let g = await parser.parseGradesFromHTML(gradeHtml);
 
     console.timeEnd('parse');
 }
