@@ -6,29 +6,39 @@
 
 1. MongoDb
 
+```shell
 yum -y install mongodb-org
+```
 
 2. Node.js
 
+```shell
 yum -y install nodejs
+```
 
 3. 源码下载
 
+```shell
 yum -y install git-core
 git clone "https://github.com/AndreamApp/TableServer.git"
 cd TableServer
 npm install
+```
 
 ## 开始使用
 
 1. 启动MongoDb
 
-mkdir -p /data/mongodata
-mongod --dbpath /data/mongodata
+```shell
+mkdir -p /data/db
+mongod --dbpath /data/db
+```
 
 2. 启动node服务器
 
+```shell
 node TableServer/app
+```
 
 ## Lisence
 

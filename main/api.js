@@ -8,7 +8,7 @@ function API(){
     this.crawler = null;
     this.parser = new Parser();
     this.db = new DB();
-    this.curr_semester = '20170';
+    this.curr_semester = '20171';
 }
 
 API.prototype.connect = async function connect(){
@@ -50,6 +50,8 @@ API.prototype.login = async function login(stunum, password){
             await this.db.register(stunum, password, info);
         }
 
+        /*
+        // Don't fetch all data as login, we can fetch it later
         let tableHtml = await this.crawler.table(this.curr_semester);
         let table = await this.parser.parseTableFromHTML(tableHtml);
         await this.db.setTable(stunum, table);
@@ -61,6 +63,7 @@ API.prototype.login = async function login(stunum, password){
         let gradeHtml = await this.crawler.grade();
         let grade = await this.parser.parseGradesFromHTML(gradeHtml);
         await this.db.setGrade(stunum, grade);
+        */
         return good(await this.db.getUserInfo(stunum));
     }
     else{
