@@ -176,7 +176,7 @@ Crawler.prototype.checkLoginStatus = async function checkLoginStatus(){
             }
             else{
                 let body = iconv.decode(buf, 'gb2312');
-                reject('unknown response:' + body + '\ncontent-length:' + contentLength);
+                reject('unknown response:' + body);
             }
         })
     });

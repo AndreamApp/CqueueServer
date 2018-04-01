@@ -46,18 +46,21 @@ router.get('/getTable', async function(req, res) {
     let stunum = req.session.stunum;
     console.log(stunum);
     let result = await api.getTable(stunum);
+    res.set({'Cache-Control': 'public, max-age=2592000'});
     res.json(result);
 });
 
 router.get('/getExams', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.getExams(stunum);
+    res.set({'Cache-Control': 'public, max-age=60'});
     res.json(result);
 });
 
 router.get('/getGrade', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.getGrade(stunum);
+    res.set({'Cache-Control': 'public, max-age=60'});
     res.json(result);
 });
 
