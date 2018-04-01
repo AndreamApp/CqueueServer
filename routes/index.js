@@ -60,7 +60,7 @@ router.get('/getExams', async function(req, res) {
 router.get('/getGrade', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.getGrade(stunum);
-    res.set({'Cache-Control': 'public, max-age=60'});
+    res.set({'Cache-Control': 'public, max-age=600'});
     res.json(result);
 });
 

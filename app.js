@@ -3,6 +3,8 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
+var https = require('https');
+var fs = require('fs');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -41,10 +43,23 @@ app.use(function (err, req, res, next) {
     res.render('error');
 });
 
-var server = app.listen(80, function () {
+var options = {
+    cert: fs.readFileSync(__dirname  + "/key/cert.pem"),
+    key: fs.readFileSync(__dirname  + "/key/key.pem"),
+    passphrase: "andreamApp97"
+};
+var server = https.createServer(options, app);
+
+server.listen(443, function () {
     var host = server.address().address
     var port = server.address().port
     console.log("应用实例，访问地址为 http://%s:%s", host, port)
-})
+});
+
+// var httpServer = app.listen(80, function () {
+//     var host = httpServer.address().address
+//     var port = httpServer.address().port
+//     console.log("应用实例，访问地址为 http://%s:%s", host, port)
+// });
 
 module.exports = app;
