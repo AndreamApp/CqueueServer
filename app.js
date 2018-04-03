@@ -5,6 +5,7 @@ var logger = require('morgan');
 var bodyParser = require('body-parser');
 var https = require('https');
 var fs = require('fs');
+let RateLimit = require('express-rate-limit');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -21,6 +22,15 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// rate limit
+var limiter = new RateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 100 requests per windowMs
+    delayMs: 0, // disable delaying - full speed until the max limit is reached
+    message: "{status: false,err: \"请求太快了！休息一下吧\",data:null}"
+});
+app.use(limiter);
 
 app.use('/api', index);
 app.use('/users', users);
