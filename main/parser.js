@@ -505,6 +505,7 @@ Parser.prototype.parseGradesFromHTML = async function parseGradesFromHTML(text){
         let currSemester = new SemesterGrade();
         currSemester.semester = table[0][0].value;
         currSemester.semester = currSemester.semester.replaceAll('学年学期：', '');
+        currSemester.semester = currSemester.semester.replaceAll('学年学期:', '');
         currSemester.data = new Array();
 
         i++;
