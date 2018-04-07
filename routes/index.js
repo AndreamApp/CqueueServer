@@ -44,7 +44,24 @@ router.get('/login', async function(req, res) {
     res.json(result);
 });
 
+router.post('/login', async function(req, res) {
+    let stunum = req.body.stunum;
+    let password = req.body.password;
+    let result = await api.login(stunum, password);
+
+    if(!req.session.stunum){
+        req.session.stunum = stunum;
+    }
+    res.json(result);
+});
+
 router.get('/logout', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.logout(stunum);
+    res.json(result);
+});
+
+router.post('/logout', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.logout(stunum);
     res.json(result);
