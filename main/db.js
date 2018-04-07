@@ -98,8 +98,8 @@ function login(stunum, password){
 DB.prototype.register = async function register(stunum, password, userInfo){
     let user = new User(stunum, password,
         userInfo.name, userInfo.sex, userInfo.birthday, userInfo.nation, userInfo.academy, userInfo.class_name);
-    let r = await this.userCol.insertOne(user);
-    return r.insertedCount == 1;
+    let r = await this.userCol.updateOne({stunum: stunum}, { $set: user }, { upsert: true });
+    return true;
 }
 
 /*

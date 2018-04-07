@@ -27,6 +27,12 @@ function getJar(stunum){
     return request.jar(jar);
 }
 
+function deleteJar(stunum){
+    let cookiepath = __dirname + "\\cookies\\"+stunum+".json";
+    fs.writeFileSync(cookiepath, '');
+    return true;
+}
+
 /*
  * 爬虫对象
  * host: 教务网域名，默认为jxgl.cqu.edu.cn
@@ -35,6 +41,7 @@ function getJar(stunum){
  * */
 function Crawler(host, stunum, timeout){
     this.host = host ? host : DEFAULT_HOST;
+    this.stunum = stunum;
     this.jar = getJar(stunum);
 
     // console.log(this.jar);
@@ -196,18 +203,11 @@ Crawler.prototype.login = async function login(stunum, password){
             status: false,
             msg: '未知错误'
         }
-        let status = await self.checkLoginStatus();
-        if(status){
-            loginStatus.status = true;
-            loginStatus.msg = '已登录';
-            resolve(loginStatus);
-            return;
-        }
-        self.get('/_data/index_login.aspx', (error, response, buf) => {
-            if(error){
-                reject(error);
-                return;
-            }
+        // self.get('/_data/index_login.aspx', (error, response, buf) => {
+        //     if(error){
+        //         reject(error);
+        //         return;
+        //     }
             self.post('/_data/index_login.aspx',
                 {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg:chkpwd(stunum, password)},
                 (error, response, buf) => {
@@ -235,7 +235,18 @@ Crawler.prototype.login = async function login(stunum, password){
                     self.loginStatus = loginStatus;
                     resolve(loginStatus);
             })
-        });
+        // });
+    });
+}
+
+/*
+ * 注销账户，删除缓存的cookie
+ * 返回Promise<boolean>
+ * */
+Crawler.prototype.logout = async function logout(){
+    const self = this;
+    return new Promise((resolve, reject) => {
+        resolve(deleteJar(self.stunum));
     });
 }
 

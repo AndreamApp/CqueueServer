@@ -42,33 +42,63 @@ API.prototype.login = async function login(stunum, password){
     if(!(stunum && password)){
         return bad('请输入学号和密码！');
     }
-    let loginResult = await this.crawler.login(stunum, password);
-    if(loginResult.status){
-        if(!await this.db.getUserInfo(stunum)){
-            let infoHtml = await this.crawler.info();
-            let info = await this.parser.parseInfoFromHTML(infoHtml);
-            await this.db.register(stunum, password, info);
+    let loginStatus = await this.crawler.checkLoginStatus();//this.crawler.login(stunum, password);
+    let userInfo = await this.db.getUserInfo(stunum);
+    // 登录Cookie缓存有效
+    if(loginStatus){
+        // 核对密码
+        if(password !== userInfo['password']){
+            return bad('账号或密码不正确');
         }
-
-        /*
-        // Don't fetch all data as login, we can fetch it later
-        let tableHtml = await this.crawler.table(this.curr_semester);
-        let table = await this.parser.parseTableFromHTML(tableHtml);
-        await this.db.setTable(stunum, table);
-
-        let examsHtml = await this.crawler.exams(this.curr_semester);
-        let exams = await this.parser.parseExamsFromHTMLArr(examsHtml);
-        await this.db.setExams(stunum, exams);
-
-        let gradeHtml = await this.crawler.grade();
-        let grade = await this.parser.parseGradesFromHTML(gradeHtml);
-        await this.db.setGrade(stunum, grade);
-        */
-        return good(await this.db.getUserInfo(stunum));
     }
+    // 登录Cookie过期 或 尚未登录
     else{
-        return bad(loginResult.msg);
+        let loginResult = await this.crawler.login(stunum, password);
+        if(loginResult.status){
+            // first login or data changed, save to database
+            if(!userInfo || password !== userInfo['password']){
+                let infoHtml = await this.crawler.info();
+                let info = await this.parser.parseInfoFromHTML(infoHtml);
+                await this.db.register(stunum, password, info);
+                userInfo = await this.db.getUserInfo(stunum);
+            }
+            // use cached
+            else{
+            }
+
+            /*
+            // Don't fetch all data as login, we can fetch it later
+            let tableHtml = await this.crawler.table(this.curr_semester);
+            let table = await this.parser.parseTableFromHTML(tableHtml);
+            await this.db.setTable(stunum, table);
+
+            let examsHtml = await this.crawler.exams(this.curr_semester);
+            let exams = await this.parser.parseExamsFromHTMLArr(examsHtml);
+            await this.db.setExams(stunum, exams);
+
+            let gradeHtml = await this.crawler.grade();
+            let grade = await this.parser.parseGradesFromHTML(gradeHtml);
+            await this.db.setGrade(stunum, grade);
+            */
+        }
+        else{
+            return bad(loginResult.msg);
+        }
     }
+
+    // filter some private field
+    delete userInfo['_id'];
+    delete userInfo['password'];
+
+    return good(userInfo);
+}
+
+API.prototype.logout = async function logout(stunum){
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    this.crawler = new Crawler(null, stunum);
+    return good(await this.crawler.logout(stunum));
 }
 
 
