@@ -76,4 +76,38 @@ router.get('/getGrade', async function(req, res) {
     res.json(result);
 });
 
+router.get('/like', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.like(stunum);
+    res.json(result);
+});
+
+router.post('/uploadFeedback', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.uploadFeedback(stunum);
+    res.json(result);
+});
+
+router.get('/getFeedbacks', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.getFeedbacks(stunum);
+    res.json(result);
+});
+
+router.get('/checkUpdate', async function(req, res) {
+    let stunum = req.session.stunum;
+    res.json({
+        status: true,
+        msg: null,
+        err: null,
+        data: {
+            version_code: 1,
+            version_name: '0.1.1',
+            app_name: 'Cqueue',
+            description: '课表和成绩考试查询',
+            download_url: 'https://cqu.andreamapp.com/download/0.0.1.apk'
+        }
+    });
+});
+
 module.exports = router;
