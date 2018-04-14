@@ -1,7 +1,4 @@
 let express = require('express');
-let session = require('express-session');
-let redis = require('redis');
-let RedisStore = require('connect-redis')(session);
 let router = express.Router();
 
 /*
@@ -12,21 +9,6 @@ let router = express.Router();
 const api = require('../main/api');
 
 api.connect();
-
-// let redisClient = redis.createClient(6379, '127.0.0.1', {auth_pass: '976655631'});
-
-router.use(session({
-    name: 'cqulite_session',
-    secret: '976655631',
-    cookie: {
-        maxAge: 30 * 24 * 60 * 60 * 1000
-    },
-    // store: new RedisStore({
-    //     client: redisClient
-    // }),
-    resave: false,
-    saveUninitialized: false
-}));
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -90,7 +72,7 @@ router.get('/getExams', async function(req, res) {
 router.get('/getGrade', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.getGrade(stunum);
-    res.set({'Cache-Control': 'public, max-age=600'});
+    res.set({'Cache-Control': 'public, max-age=60'});
     res.json(result);
 });
 

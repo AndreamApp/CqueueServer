@@ -6,6 +6,8 @@ var bodyParser = require('body-parser');
 var https = require('https');
 var fs = require('fs');
 let RateLimit = require('express-rate-limit');
+let session = require('express-session');
+let MongoStore = require('connect-mongo')(session);
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -31,6 +33,18 @@ var limiter = new RateLimit({
     message: "{status: false,err: \"请求太快了！休息一下吧\",data:null}"
 });
 app.use(limiter);
+
+// session & store
+app.use(session({
+    name: 'cqulite_session',
+    secret: '976655631',
+    cookie: {
+        maxAge: 30 * 24 * 60 * 60 * 1000
+    },
+    store: new MongoStore({ url: 'mongodb://localhost:27017/session'}),
+    resave: false,
+    saveUninitialized: false
+}));
 
 app.use('/api', index);
 app.use('/users', users);
