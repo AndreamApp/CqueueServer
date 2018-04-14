@@ -46,7 +46,7 @@ app.use(session({
     saveUninitialized: false
 }));
 
-app.use('/api', index);
+app.use('/api/v1', index);
 app.use('/users', users);
 
 // catch 404 and forward to error handler

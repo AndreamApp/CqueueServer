@@ -54,6 +54,13 @@ DB.prototype.connect = async function connect(){
         this.client = await MongoClient.connect(url);
         this.db = this.client.db(dbName);
         this.userCol = this.db.collection('user');
+        if(this.db.collection('feedback') == null){
+            this.db.createCollection('feedback', null, (error, collection) => {
+                if(error){
+                    reject(error);
+                }
+            })
+        }
         if(this.userCol == null){
             this.db.createCollection('user', null, (error, collection) => {
                 if(error){
@@ -108,7 +115,11 @@ DB.prototype.register = async function register(stunum, password, userInfo){
  * 异常：该用户不存在
  */
 DB.prototype.getUserInfo = async function getUserInfo(stunum){
-    let r = await this.userCol.findOne({stunum: stunum});
+    let r = await this.userCol.findOne({stunum: stunum}, {
+        projection:{
+            "_id": 0
+        }
+    });
     return r;
 }
 ////////////////////////////////////////////
@@ -251,6 +262,25 @@ DB.prototype.obtainCookie = async function getCookie(stunum, host){
     else{
         return null;
     }
+}
+
+DB.prototype.like = async function like(stunum) {
+    let r = await this.userCol.updateOne({stunum: stunum}, {$set: {like: 1}});
+    return this.userCol.find({like: 1}).count();
+}
+
+DB.prototype.uploadFeedback = async function uploadFeedback(stunum, message, stackTrack) {
+    let r = await this.db.collection('feedback').insertOne({stunum: stunum, message: message, stack_track: stackTrack});
+    return true;
+}
+
+DB.prototype.getFeedbacks = async function getFeedbacks() {
+    let r = await this.db.collection('feedback').find({}, {
+        projection:{
+            "_id": 0
+        }
+    }).toArray();
+    return r;
 }
 
 // Exports

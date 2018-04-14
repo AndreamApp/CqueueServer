@@ -87,7 +87,6 @@ API.prototype.login = async function login(stunum, password){
     }
 
     // filter some private field
-    delete userInfo['_id'];
     delete userInfo['password'];
 
     return good(userInfo);
@@ -170,16 +169,43 @@ API.prototype.getGrade = async function getGrade(stunum){
     }
 }
 
+API.prototype.like = async function like(stunum) {
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    let likeNum = await this.db.like(stunum);
+    return good(null, '有'+likeNum+'位小伙伴和你一样喜欢我');
+}
+
+API.prototype.uploadFeedback = async function uploadFeedback(stunum, message, stackTrack) {
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    let res = await this.db.uploadFeedback(stunum, message, stackTrack);
+    return good(res);
+}
+
+API.prototype.getFeedbacks = async function getFeedbacks(stunum) {
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    let res = await this.db.getFeedbacks();
+    return good(res);
+}
 
 async function synctest(){
     let api = new API();
     await api.connect();
 
     console.time('parse');
-    console.log(JSON.stringify(await api.login('20151597', '976655'), null, 4));
-    console.log(JSON.stringify(await api.getTable('20151597'), null, 4));
-    console.log(JSON.stringify(await api.getGrade('20151597'), null, 4));
-    console.log(JSON.stringify(await api.getExams('20151597'), null, 4));
+    console.log(JSON.stringify(await api.login('20151597', '237231'), null, 4));
+    // console.log(JSON.stringify(await api.getTable('20151597'), null, 4));
+    // console.log(JSON.stringify(await api.getGrade('20151597'), null, 4));
+    // console.log(JSON.stringify(await api.getExams('20151597'), null, 4));
+
+    console.log(JSON.stringify(await api.like('20151597'), null, 4));
+    // console.log(JSON.stringify(await api.uploadFeedback('20151597', 'test message', 'test stack trace'), null, 4));
+    console.log(JSON.stringify(await api.getFeedbacks('20151597'), null, 4));
 
     console.timeEnd('parse');
     await api.close();
