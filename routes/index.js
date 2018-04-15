@@ -84,7 +84,7 @@ router.get('/like', async function(req, res) {
 
 router.post('/uploadFeedback', async function(req, res) {
     let stunum = req.session.stunum;
-    let result = await api.uploadFeedback(stunum);
+    let result = await api.uploadFeedback(stunum, req.body.message, req.body.stackTrack);
     res.json(result);
 });
 
@@ -108,6 +108,12 @@ router.get('/checkUpdate', async function(req, res) {
             download_url: 'https://cqu.andreamapp.com/download/0.0.1.apk'
         }
     });
+});
+
+router.post('/crash', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.crashReport(stunum, req.body);
+    res.json(result);
 });
 
 module.exports = router;

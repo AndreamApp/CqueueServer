@@ -61,6 +61,13 @@ DB.prototype.connect = async function connect(){
                 }
             })
         }
+        if(this.db.collection('crash') == null){
+            this.db.createCollection('crash', null, (error, collection) => {
+                if(error){
+                    reject(error);
+                }
+            })
+        }
         if(this.userCol == null){
             this.db.createCollection('user', null, (error, collection) => {
                 if(error){
@@ -281,6 +288,11 @@ DB.prototype.getFeedbacks = async function getFeedbacks() {
         }
     }).toArray();
     return r;
+}
+
+DB.prototype.crashReport = async function crashReport(stunum, data) {
+    let r = await this.db.collection('crash').insertOne({stunum: stunum, data: data});
+    return true;
 }
 
 // Exports

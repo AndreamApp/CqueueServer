@@ -193,6 +193,15 @@ API.prototype.getFeedbacks = async function getFeedbacks(stunum) {
     return good(res);
 }
 
+
+API.prototype.crashReport = async function crashReport(stunum, data) {
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    let res = await this.db.crashReport(stunum, data);
+    return good(res);
+}
+
 async function synctest(){
     let api = new API();
     await api.connect();
