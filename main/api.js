@@ -2,6 +2,7 @@
 const Crawler = require('./crawler')
 const Parser = require('./parser')
 const DB = require('./db')
+const md5 = require('./md5')
 
 
 function API(){
@@ -37,29 +38,39 @@ function bad(err){
     };
 }
 
-API.prototype.login = async function login(stunum, password){
+
+function chkpwd(stunum, password){
+    if(!password) return null;
+    let schoolcode = "10611";
+    let yhm = stunum;
+    let encrypt = md5(yhm+md5(password).substring(0,30).toUpperCase()+schoolcode).substring(0,30).toUpperCase();
+    return encrypt;
+}
+
+API.prototype.login = async function login(stunum, pass){
     this.crawler = new Crawler(null, stunum);
-    if(!(stunum && password)){
+    if(!(stunum && pass)){
         return bad('请输入学号和密码！');
     }
+    pass = chkpwd(stunum, pass); // only process login with encrypted password
     let loginStatus = await this.crawler.checkLoginStatus();//this.crawler.login(stunum, password);
     let userInfo = await this.db.getUserInfo(stunum);
     // 登录Cookie缓存有效
     if(loginStatus){
         // 核对密码
-        if(password !== userInfo['password']){
+        if(pass !== userInfo['password']){
             return bad('账号或密码不正确');
         }
     }
     // 登录Cookie过期 或 尚未登录
     else{
-        let loginResult = await this.crawler.login(stunum, password);
+        let loginResult = await this.crawler.login(stunum, pass);
         if(loginResult.status){
             // first login or data changed, save to database
-            if(!userInfo || password !== userInfo['password']){
+            if(!userInfo || pass !== userInfo['password']){
                 let infoHtml = await this.crawler.info();
                 let info = await this.parser.parseInfoFromHTML(infoHtml);
-                await this.db.register(stunum, password, info);
+                await this.db.register(stunum, pass, info);
                 userInfo = await this.db.getUserInfo(stunum);
             }
             // use cached

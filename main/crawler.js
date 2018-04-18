@@ -70,13 +70,6 @@ function gbkEncodeURIComponent(s){
     return urlencode(s, 'gb2312');
 }
 
-function chkpwd(stunum, password){
-    if(!password) return null;
-    let schoolcode = "10611";
-    let yhm = stunum;
-    let encrypt = md5(yhm+md5(password).substring(0,30).toUpperCase()+schoolcode).substring(0,30).toUpperCase();
-    return encrypt;
-}
 
 /*
  * 检测响应结果是否正常
@@ -196,20 +189,20 @@ Crawler.prototype.checkLoginStatus = async function checkLoginStatus(){
  * 返回Promise<LoginStatus>登录状态信息。如果登录成功，会自动保持cookie，以执行进一步的操作
  * TODO: 自动管理各个用户的cookie
  * */
-Crawler.prototype.login = async function login(stunum, password){
+Crawler.prototype.login = async function login(stunum, pass){
     const self = this;
     return new Promise(async (resolve, reject) => {
         let loginStatus = {
             status: false,
             msg: '未知错误'
-        }
+        };
         // self.get('/_data/index_login.aspx', (error, response, buf) => {
         //     if(error){
         //         reject(error);
         //         return;
         //     }
             self.post('/_data/index_login.aspx',
-                {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg:chkpwd(stunum, password)},
+                {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg: pass},
                 (error, response, buf) => {
                     if(error){
                         reject(error);
