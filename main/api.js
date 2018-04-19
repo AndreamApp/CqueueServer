@@ -117,6 +117,14 @@ API.prototype.getUserInfo = async function getUserInfo(stunum){
     return await this.login(stunum, userInfo.password);
 }
 
+API.prototype.getUserList = async function getUserList(stunum){
+    if(stunum !== '20151597') {
+        return bad('Permission denied');
+    }
+    let res = this.db.getUserList();
+    return res;
+}
+
 API.prototype.getTable = async function getTable(stunum){
     if(!stunum || stunum === ''){
         return bad('登录身份已过期');
@@ -215,7 +223,7 @@ API.prototype.crashReport = async function crashReport(stunum, data) {
 
 API.prototype.getCrashList = async function getCrashList(stunum) {
     if(stunum !== '20151597'){
-        return bad('没有权限查看崩溃报告');
+        return bad('Permission denied');
     }
     let res = await this.db.getCrashList();
     return good(res);

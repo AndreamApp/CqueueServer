@@ -83,11 +83,11 @@ DB.prototype.connect = async function connect(){
             resolve(false);
         }
     });
-}
+};
 
 DB.prototype.close = async function close(){
     await this.client.close();
-}
+};
 
 ////////////////////////////////////////////
 // User
@@ -114,7 +114,7 @@ DB.prototype.register = async function register(stunum, password, userInfo){
         userInfo.name, userInfo.sex, userInfo.birthday, userInfo.nation, userInfo.academy, userInfo.class_name);
     let r = await this.userCol.updateOne({stunum: stunum}, { $set: user }, { upsert: true });
     return true;
-}
+};
 
 /*
  * 返回该用户的全部信息，包含课表考试和成绩
@@ -128,14 +128,35 @@ DB.prototype.getUserInfo = async function getUserInfo(stunum){
         }
     });
     return r;
-}
+};
+
+/*
+ * 返回该用户的全部信息，包含课表考试和成绩
+ * stunum : 学号
+ * 异常：该用户不存在
+ */
+DB.prototype.getUserList = async function getUserList(){
+    let r = await this.userCol.find({}, {
+        projection:{
+            "_id": 0,
+            "password": 0,
+            "table": 0,
+            "mytable": 0,
+            "exams": 0,
+            "myexams": 0,
+            "grade": 0,
+            "todo": 0
+        }
+    }).toArray();
+    return r;
+};
 ////////////////////////////////////////////
 // Table
 ////////////////////////////////////////////
 DB.prototype.setTable = async function setTable(stunum, table){
     let r = await this.userCol.updateOne({stunum: stunum}, {$set: {table: table}});
     return r.modifiedCount == 1;
-}
+};
 
 function setMyTable(stunum, table){
 
@@ -147,7 +168,7 @@ DB.prototype.getTable = async function getTable(stunum){
         return user.table;
     }
     return null;
-}
+};
 /*
  * 返回该用户的课表信息
  * stunum : 学号
@@ -181,7 +202,7 @@ function resetMyTable(stunum){
 DB.prototype.setExams = async function setExams(stunum, exams){
     let r = await this.userCol.updateOne({stunum: stunum}, {$set: {exams: exams}});
     return r.modifiedCount == 1;
-}
+};
 
 function setMyExams(stunum, exams){
 
@@ -199,7 +220,7 @@ DB.prototype.getMyExam = async function getMyExam(stunum){
         return user.exams;
     }
     return null;
-}
+};
 /*
  * 为该户用添加一个考试信息，并返回当前考试列表
  * stunum : 学号
@@ -226,7 +247,7 @@ function removeExam(stunum, exam){
 DB.prototype.setGrade = async function setGrade(stunum, grade){
     let r = await this.userCol.updateOne({stunum: stunum}, {$set: {grade: grade}});
     return r.modifiedCount == 1;
-}
+};
 /*
  * 返回该用户的所有成绩信息
  * stunum : 学号
@@ -239,7 +260,7 @@ DB.prototype.getGrade = async function getGrade(stunum){
         return user.grade;
     }
     return null;
-}
+};
 
 DB.prototype.setCookie = async function setCookie(stunum, password, host, cookie, last_login){
     let r = await this.privacyCol.updateOne({stunum:stunum}, {
@@ -251,12 +272,12 @@ DB.prototype.setCookie = async function setCookie(stunum, password, host, cookie
         }
     }, {upsert: true})
     return true;
-}
+};
 
 DB.prototype.getCookie = async function getCookie(stunum){
     let r = await this.privacyCol.findOne({stunum:stunum})
     return r;
-}
+};
 
 const COOKIE_CACHE_AGE = 3600 * 1000;
 DB.prototype.obtainCookie = async function getCookie(stunum, host){
@@ -269,17 +290,17 @@ DB.prototype.obtainCookie = async function getCookie(stunum, host){
     else{
         return null;
     }
-}
+};
 
 DB.prototype.like = async function like(stunum) {
     let r = await this.userCol.updateOne({stunum: stunum}, {$set: {like: 1}});
     return this.userCol.find({like: 1}).count();
-}
+};
 
 DB.prototype.uploadFeedback = async function uploadFeedback(stunum, message, stackTrack) {
     let r = await this.db.collection('feedback').insertOne({stunum: stunum, message: message, stack_track: stackTrack});
     return true;
-}
+};
 
 DB.prototype.getFeedbacks = async function getFeedbacks() {
     let r = await this.db.collection('feedback').find({}, {
@@ -288,17 +309,17 @@ DB.prototype.getFeedbacks = async function getFeedbacks() {
         }
     }).toArray();
     return r;
-}
+};
 
 DB.prototype.crashReport = async function crashReport(stunum, data) {
     let r = await this.db.collection('crash').insertOne({stunum: stunum, data: data});
     return true;
-}
+};
 
 DB.prototype.getCrashList = async function getCrashList() {
     let r = await this.db.collection('crash').find({}).toArray();
     return r;
-}
+};
 
 // Exports
 

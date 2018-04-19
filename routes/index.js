@@ -55,6 +55,12 @@ router.get('/getUserInfo', async function(req, res) {
     res.json(result);
 });
 
+router.get('/getUserList', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.getUserList(stunum);
+    res.json(result);
+});
+
 router.get('/getTable', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.getTable(stunum);
