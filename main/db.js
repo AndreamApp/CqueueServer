@@ -295,6 +295,11 @@ DB.prototype.crashReport = async function crashReport(stunum, data) {
     return true;
 }
 
+DB.prototype.getCrashList = async function getCrashList() {
+    let r = await this.db.collection('crash').find({}).toArray();
+    return r;
+}
+
 // Exports
 
 module.exports = DB;

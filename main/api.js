@@ -213,6 +213,14 @@ API.prototype.crashReport = async function crashReport(stunum, data) {
     return good(res);
 }
 
+API.prototype.getCrashList = async function getCrashList(stunum) {
+    if(stunum !== '20151597'){
+        return bad('没有权限查看崩溃报告');
+    }
+    let res = await this.db.getCrashList();
+    return good(res);
+}
+
 async function synctest(){
     let api = new API();
     await api.connect();

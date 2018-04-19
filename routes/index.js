@@ -116,4 +116,10 @@ router.post('/crash', async function(req, res) {
     res.json(result);
 });
 
+router.get('/getCrashList', async function(req, res) {
+    let stunum = req.session.stunum;
+    let result = await api.getCrashList(stunum);
+    res.json(result);
+});
+
 module.exports = router;
