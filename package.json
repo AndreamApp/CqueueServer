@@ -20,6 +20,7 @@
     "jade": "~1.11.0",
     "mongodb": "^3.0.2",
     "morgan": "~1.9.0",
+    "nodemailer": "^4.6.4",
     "request": "^2.83.0",
     "serve-favicon": "~2.4.5",
     "tough-cookie-filestore": "^0.0.1",

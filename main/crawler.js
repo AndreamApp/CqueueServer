@@ -180,7 +180,62 @@ Crawler.prototype.checkLoginStatus = async function checkLoginStatus(){
             }
         })
     });
+};
+
+function HostControlBlock(stunum, host){
+    this.stunum = stunum;
+    this.host = host;
+    this.expire = Date.now() + new Date(hours = 1);
 }
+
+// 遍历
+//     去除过期的HCB
+//     统计每个域名的占用数量
+Crawler.prototype.hostSchedule = function hostSchedule(){
+    if(!global.hostQueue){
+        global.hostQueue = [];
+        global.hosts = [
+            'http://jxgl.cqu.edu.cn',
+            'http://202.202.1.41'
+        ];
+    }
+    let resched = true;
+    let stat = new Array(global.hosts.length);
+    stat.fill(0);
+    for(let i = 0; i < global.hostQueue.length; i++){
+        let hcb = global.hostQueue[i];
+        if(hcb.expire < Date.now()){
+            //global.hostQueue.pop();
+        }
+        else if(hcb.stunum === this.stunum){
+            resched = false;
+            break;
+        }
+        else{
+            for(let j = 0; j < global.hosts.length; j++){
+                if(hcb.host === global.hosts[j]){
+                    stat[j]++;
+                    break;
+                }
+            }
+        }
+    }
+
+    if(resched){
+        let minLoad = stat[0];
+        let minHost = global.hosts[0];
+        for(let i = 1; i < global.hosts.length; i++){
+            if(stat[i] < minLoad){
+                minLoad = stat[i];
+                minHost = global.hosts[i];
+            }
+        }
+        this.host = minHost;
+        let hcb = new HostControlBlock(this.stunum, minHost);
+        global.hostQueue.push(hcb);
+    }
+    return resched;
+};
 
 /*
  * 使用指定的学号和密码登录到教务网，暂时只支持本科生账号
@@ -196,39 +251,34 @@ Crawler.prototype.login = async function login(stunum, pass){
             status: false,
             msg: '未知错误'
         };
-        // self.get('/_data/index_login.aspx', (error, response, buf) => {
-        //     if(error){
-        //         reject(error);
-        //         return;
-        //     }
-            self.post('/_data/index_login.aspx',
-                {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg: pass},
-                (error, response, buf) => {
-                    if(error){
-                        reject(error);
-                        return;
-                    }
-                    let body = iconv.decode(buf, 'gb2312');
-                    if(body.indexOf('正在加载权限数据') != -1){
-                        loginStatus.status = true;
-                        loginStatus.msg = '登录成功';
-                    }
-                    else if(body.indexOf('账号或密码不正确') != -1){
-                        loginStatus.status = false;
-                        loginStatus.msg = '账号或密码不正确';
-                    }
-                    else if(body.indexOf('该账号尚未分配角色') != -1){
-                        loginStatus.status = false;
-                        loginStatus.msg = '该账号不存在';
-                    }
-                    else if(body.indexOf('此页面发现一个意外') != -1){
-                        loginStatus.status = false;
-                        loginStatus.msg = '参数错误';
-                    }
-                    self.loginStatus = loginStatus;
-                    resolve(loginStatus);
-            })
-        // });
+        self.hostSchedule();
+        self.post('/_data/index_login.aspx',
+            {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg: pass},
+            (error, response, buf) => {
+                if(error){
+                    reject(error);
+                    return;
+                }
+                let body = iconv.decode(buf, 'gb2312');
+                if(body.indexOf('正在加载权限数据') != -1){
+                    loginStatus.status = true;
+                    loginStatus.msg = '登录成功';
+                }
+                else if(body.indexOf('账号或密码不正确') != -1){
+                    loginStatus.status = false;
+                    loginStatus.msg = '账号或密码不正确';
+                }
+                else if(body.indexOf('该账号尚未分配角色') != -1){
+                    loginStatus.status = false;
+                    loginStatus.msg = '该账号不存在';
+                }
+                else if(body.indexOf('此页面发现一个意外') != -1){
+                    loginStatus.status = false;
+                    loginStatus.msg = '参数错误';
+                }
+                self.loginStatus = loginStatus;
+                resolve(loginStatus);
+        })
     });
 }
 
@@ -320,7 +370,6 @@ Crawler.prototype.exams = async function exams(semester) {
                     });
             }
         });
-
     });
 }
 
@@ -352,7 +401,7 @@ async function synctest(){
     let end;
     let origin = start;
 
-    let result = await crawler.login('20151597', '976655');
+    let result = await crawler.login('20151597', '237231');
     console.log(result.msg);
 
     let infoBody = await crawler.info();
