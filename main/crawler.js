@@ -82,7 +82,10 @@ function gbkEncodeURIComponent(s){
  * */
 Crawler.prototype.badResponse = function badResponse(error, response, reject){
     const self = this;
+    // 统计访问失效次数，用于监测域名状态
+    global.hostsStatus[self.host].totalTimes++;
     if(error){
+        global.hostsStatus[self.host].errorTimes++;
         reject(error);
         return true;
     }
@@ -127,7 +130,9 @@ Crawler.prototype.getWithRedirect = function get(url, redirect, callback){
         followRedirect: redirect,
         time: true,
         forever: true
-    }, callback);
+    }, () => {
+        callback();
+    });
 }
 
 /*
@@ -188,16 +193,40 @@ function HostControlBlock(stunum, host){
     this.expire = Date.now() + new Date(hours = 1);
 }
 
+function initHost(){
+    global.hostQueue = [];
+    global.hosts = [
+        'http://jxgl.cqu.edu.cn',
+        'http://202.202.1.41'
+    ];
+    global.hostStatus = {};
+    for(let i = 0; i < global.hosts.length; i++){
+        global.hostStatus[global.hosts[i]].errorTimes = 0;
+        global.hostStatus[global.hosts[i]].totalTimes = 0;
+        global.hostStatus[global.hosts[i]].failureRate = 0.0;
+        global.hostStatus[global.hosts[i]].enabled = true;
+    }
+    function hostStatusDemon(){
+        // 重新计算所有域名的失效率
+        // 重新评估所有域名的可用性
+        for(let i = 0; i < global.hosts.length; i++){
+            let host = global.hostStatus[global.hosts[i]];
+            let r = host.errorTimes / host.totalTimes;
+            global.hostStatus[global.hosts[i]].errorTimes = 0;
+            global.hostStatus[global.hosts[i]].totalTimes = 0;
+            global.hostStatus[global.hosts[i]].failureRate = host.failureRate * 0.6 + r * 0.4;
+            global.hostStatus[global.hosts[i]].enabled = global.hostStatus[global.hosts[i]].failureRate < 0.5;
+        }
+    }
+    setInterval(hostStatusDemon, 60 * 1000);
+}
+
 // 遍历
 //     去除过期的HCB
 //     统计每个域名的占用数量
 Crawler.prototype.hostSchedule = function hostSchedule(){
     if(!global.hostQueue){
-        global.hostQueue = [];
-        global.hosts = [
-            'http://jxgl.cqu.edu.cn',
-            'http://202.202.1.41'
-        ];
+        initHost();
     }
     let resched = true;
     let stat = new Array(global.hosts.length);
@@ -225,14 +254,18 @@ Crawler.prototype.hostSchedule = function hostSchedule(){
         let minLoad = stat[0];
         let minHost = global.hosts[0];
         for(let i = 1; i < global.hosts.length; i++){
-            if(stat[i] < minLoad){
+            if(stat[i] < minLoad && global.hostStatus[global.hosts[i]].enabled){
                 minLoad = stat[i];
                 minHost = global.hosts[i];
             }
         }
+        console.log(this.stunum, 'scheduled from', this.host, 'to', minHost);
         this.host = minHost;
         let hcb = new HostControlBlock(this.stunum, minHost);
         global.hostQueue.push(hcb);
+    }
+    else{
+        console.log(this.stunum, 'no schedule')
     }
     return resched;
 };
@@ -255,8 +288,7 @@ Crawler.prototype.login = async function login(stunum, pass){
         self.post('/_data/index_login.aspx',
             {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg: pass},
             (error, response, buf) => {
-                if(error){
-                    reject(error);
+                if(self.badResponse(error, response, buf)){
                     return;
                 }
                 let body = iconv.decode(buf, 'gb2312');
@@ -401,7 +433,7 @@ async function synctest(){
     let end;
     let origin = start;
 
-    let result = await crawler.login('20151597', '237231');
+    let result = await crawler.login('20151597', '976655');
     console.log(result.msg);
 
     let infoBody = await crawler.info();
@@ -450,6 +482,12 @@ function asynctest(){
     console.log('async:total', (Date.now() - origin));
 }
 
+async function schedule_test() {
+    for(let i = 0; i < 1000; i++){
+        let crawler = new Crawler(null, 20151597+i);
+        crawler.hostSchedule();
+    }
+}
 // asynctest();
 // synctest();
 
