@@ -533,22 +533,26 @@ async function synctest(){
     let crawler = new Crawler();
     let parser = new Parser();
     console.time('parse');
+    let start = Date.now();
 
     await crawler.login('20151597', '976655');
+    console.log('time in login:', Date.now() - start); start = Date.now();
 
-    // let infoHtml = await crawler.info();
+    let infoHtml = await crawler.info();
+    console.log('time in info:', Date.now() - start); start = Date.now();
     // console.log(JSON.stringify(await parser.parseInfoFromHTML(infoHtml)));
 
-    // let tableHtml = await crawler.table('20170');
+    let tableHtml = await crawler.table('20170');
+    console.log('time in table:', Date.now() - start); start = Date.now();
     // console.log(JSON.stringify(await parser.parseTableFromHTML(tableHtml)));
 
-    // let examsHtml = await crawler.exams('20170');
-    // console.log(JSON.stringify(await parser.parseExamsFromHTMLArr(examsHtml)));
+    let examsHtml = await crawler.exams('20170');
+    console.log('time in exams:', Date.now() - start); start = Date.now();
+    //console.log(JSON.stringify(await parser.parseExamsFromHTMLArr(examsHtml)));
 
     let gradeHtml = await crawler.grade();
-    console.log(JSON.stringify(await parser.parseGradesFromHTML(gradeHtml)));
-
-    let g = await parser.parseGradesFromHTML(gradeHtml);
+    console.log('time in grade:', Date.now() - start); start = Date.now();
+    //console.log(JSON.stringify(await parser.parseGradesFromHTML(gradeHtml)));
 
     console.timeEnd('parse');
 }
@@ -584,7 +588,7 @@ function asynctest(){
 }
 
 // asynctest();
-// synctest();
+synctest();
 
 
 // Exports

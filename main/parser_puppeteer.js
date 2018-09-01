@@ -5,6 +5,8 @@ const fs = require("fs");
 const htmlparser = require("htmlparser2");
 
 const HOST = 'http://jxgl.cqu.edu.cn';
+const HOST2 = 'http://202.202.1.41';
+const period = 200;
 
 const USERNAME_SELECTOR = '#txt_dsdsdsdjkjkjc';
 const PASSWORD_SELECTOR = '#txt_dsdfdfgfouyy';
@@ -82,14 +84,14 @@ function Exam(course_name, course_code, credit, time_str, start_time, end_time, 
  * page: 已经打开的Chromium页面
  * TODO: 返回登录状态
  */
-async function login(page){
-    await page.goto(HOST + '/_data/index_login.aspx');
+async function login(host, page){
+    await page.goto(host + '/_data/index_login.aspx');
     // 输入用户名
     await page.click(USERNAME_SELECTOR);
     await page.keyboard.type('20151597');
     // 输入密码
     await page.click(PASSWORD_SELECTOR);
-    await page.keyboard.type('976655');
+    await page.keyboard.type('237231');
     // 登录
     await page.click(LOGIN_SELECTOR);
     await page.waitForNavigation();
@@ -603,7 +605,7 @@ async function interceptPage(page){
         //console.log(req.url);
         // total++;
         for(let i = 0; i < interceptions.length; i++){
-            if(req.url().endsWith(interceptions[i])){
+            if(req.url().endsWith(interceptions[i]) || req.url().indexOf('Sorry.aspx') >= 0){
                 req.abort();
                 //console.log('aborted ' + req.url());
                 // aborted++;
@@ -616,73 +618,125 @@ async function interceptPage(page){
     });
 }
 
+async function checkCourse(host, page){
+    await page.goto(host + '/wsxk/stu_btx.aspx');
+    await page.click('[value=检索]');
+    return new Promise((resolve, reject) => {
+        page.on('response', async res => {
+            if(res.url().endsWith('/wsxk/stu_btx_rpt.aspx')){
+                if(res.status() === 200){
+                    // 检索成功
+                    console.log(await page.frames()[2].content());
+                    resolve(await page.frames()[2].content());
+                }
+                else{
+                    setTimeout(() => {
+                        page.click('[value=检索]');
+                    }, period);
+                }
+            }
+            else{
+            }
+            console.log('检索课程:', res.status(), res.url());
+        });
+    });
+}
+
+async function submitCourse(host, page){
+    await page.click('[value=提交]');
+    return new Promise((resolve, reject) => {
+        page.on('response', async res => {
+            if(res.url().endsWith('/wsxk/stu_btx_rpt.aspx')){
+                if(res.status() === 200){
+                    // 检索成功
+                    console.log(await page.frames()[2].content());
+                    resolve(await page.frames()[2].content());
+                }
+                else{
+                    setTimeout(() => {
+                        page.click('[value=提交]');
+                    }, period);
+                }
+            }
+            else{
+            }
+            console.log('检索英语:', res.status(), res.url());
+        });
+    });
+}
+
+async function checkEnglish(host, page){
+    await page.goto(host + '/wsxk/stu_yytgk_bx.aspx');
+    await page.click('[value=检索]');
+    return new Promise((resolve, reject) => {
+        page.on('response', async res => {
+            if(res.url().endsWith('/wsxk/stu_btx_rpt.aspx')){
+                if(res.status() === 200){
+                    // 检索成功
+                    console.log(await page.frames()[2].content());
+                    resolve(await page.frames()[2].content());
+                }
+                else{
+                    setTimeout(() => {
+                        page.click('[value=检索]');
+                    }, period);
+                }
+            }
+            else{
+            }
+            console.log('检索英语:', res.status(), res.url());
+        });
+    });
+}
+
 async function main(){
     let start = Date.now();
 
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: false});
 
-    const page = await browser.newPage();
-    //await page.emulate(devices['iPhone 6']);
-    await interceptPage(page);
 
     // 拦截不必要的请求，提高速度
     let aborted = 0;
     let total = 0;
 
     // 登录
-    await login(page);
+    const page = await browser.newPage();
+    //await page.emulate(devices['iPhone 6']);
+    await interceptPage(page);
+    await login(HOST2, page);
+    checkCourse(HOST2, page)
+        .then(() => {
+            //submitCourse(HOST2, page);
+        });
 
-    // parseInfo(page).then(info => {
-    //     //console.log(info);
-    //     console.log('time in parseInfo:', Date.now() - start);
-    // });
-    //
-    // browser.newPage().then(async page => {
-    //     await interceptPage(page);
-    //     return parseTable(page);
-    // }).then(table => {
-    //     //console.log(table);
-    //     console.log('time in parseTable:', Date.now() - start);
-    // });
-    //
-    // browser.newPage().then(async page => {
-    //     await interceptPage(page);
-    //     return parseExam(page);
-    // }).then(examTable => {
-    //     //console.log(JSON.stringify(examTable, null, 4));
-    //     console.log('time in parseExam:', Date.now() - start);
-    // });
-    //
-    // browser.newPage().then(async page => {
-    //     await interceptPage(page);
-    //     return parseGrade(page);
-    // }).then(gradeTable => {
-    //     //console.log(JSON.stringify(gradeTable, null, 4));
-    //     console.log('time in parseGrade:', Date.now() - start);
-    // });
+    let page2 = await browser.newPage();
+    await interceptPage(page2);
+    checkEnglish(HOST2, page2);
 
+    /*
     // 查看个人信息
     let info = await parseInfo(page);
-    console.log(info);
+    console.log('time in info:', Date.now() - start); start = Date.now();
 
     // 查看课表
     let table = await parseTable(page);
-    console.log(table);
+    console.log('time in table:', Date.now() - start); start = Date.now();
 
     // 查看考试
     let exams = await parseExam(page);
-    console.log(JSON.stringify(exams, null, 4));
+    console.log('time in exams:', Date.now() - start); start = Date.now();
 
     // 查看成绩
     let grades = await parseGrade(page);
-    console.log(JSON.stringify(grades, null, 4));
+    console.log('time in grade:', Date.now() - start); start = Date.now();
 
     console.log('total request count:', total);
     console.log('aborted req count:', aborted);
 
     console.log('time in millons:', Date.now() - start);
+    */
 
-    await browser.close();
+    //await browser.close();
 }
 
 async function debug(page){

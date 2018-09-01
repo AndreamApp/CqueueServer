@@ -11,13 +11,13 @@ let request = require('request');
  * 每个小时只登录一次
  * */
 
-const DEFAULT_HOST = 'http://jxgl.cqu.edu.cn'; // 教务网域名
-// const DEFAULT_HOST = 'http://202.202.1.41'; // 教务网域名
+//const DEFAULT_HOST = 'http://jxgl.cqu.edu.cn'; // 教务网域名
+const DEFAULT_HOST = 'http://202.202.1.41'; // 教务网域名
 
 const DEFAULT_TIMEOUT = 10000;
 
 function getJar(stunum){
-    let cookiepath = __dirname + "\\cookies\\"+stunum+".json";
+    let cookiepath = __dirname + "/cookies/"+stunum+".json";
 // create the json file if it does not exist
     if(!fs.existsSync(cookiepath)){
         fs.closeSync(fs.openSync(cookiepath, 'w'));
@@ -28,7 +28,7 @@ function getJar(stunum){
 }
 
 function deleteJar(stunum){
-    let cookiepath = __dirname + "\\cookies\\"+stunum+".json";
+    let cookiepath = __dirname + "/cookies/"+stunum+".json";
     fs.writeFileSync(cookiepath, '');
     return true;
 }
@@ -82,10 +82,7 @@ function gbkEncodeURIComponent(s){
  * */
 Crawler.prototype.badResponse = function badResponse(error, response, reject){
     const self = this;
-    // 统计访问失效次数，用于监测域名状态
-    global.hostsStatus[self.host].totalTimes++;
     if(error){
-        global.hostsStatus[self.host].errorTimes++;
         reject(error);
         return true;
     }
@@ -130,9 +127,7 @@ Crawler.prototype.getWithRedirect = function get(url, redirect, callback){
         followRedirect: redirect,
         time: true,
         forever: true
-    }, () => {
-        callback();
-    });
+    }, callback);
 }
 
 /*
@@ -185,90 +180,7 @@ Crawler.prototype.checkLoginStatus = async function checkLoginStatus(){
             }
         })
     });
-};
-
-function HostControlBlock(stunum, host){
-    this.stunum = stunum;
-    this.host = host;
-    this.expire = Date.now() + new Date(hours = 1);
 }
-
-function initHost(){
-    global.hostQueue = [];
-    global.hosts = [
-        'http://jxgl.cqu.edu.cn',
-        'http://202.202.1.41'
-    ];
-    global.hostStatus = {};
-    for(let i = 0; i < global.hosts.length; i++){
-        global.hostStatus[global.hosts[i]].errorTimes = 0;
-        global.hostStatus[global.hosts[i]].totalTimes = 0;
-        global.hostStatus[global.hosts[i]].failureRate = 0.0;
-        global.hostStatus[global.hosts[i]].enabled = true;
-    }
-    function hostStatusDemon(){
-        // 重新计算所有域名的失效率
-        // 重新评估所有域名的可用性
-        for(let i = 0; i < global.hosts.length; i++){
-            let host = global.hostStatus[global.hosts[i]];
-            let r = host.errorTimes / host.totalTimes;
-            global.hostStatus[global.hosts[i]].errorTimes = 0;
-            global.hostStatus[global.hosts[i]].totalTimes = 0;
-            global.hostStatus[global.hosts[i]].failureRate = host.failureRate * 0.6 + r * 0.4;
-            global.hostStatus[global.hosts[i]].enabled = global.hostStatus[global.hosts[i]].failureRate < 0.5;
-        }
-    }
-    setInterval(hostStatusDemon, 60 * 1000);
-}
-
-// 遍历
-//     去除过期的HCB
-//     统计每个域名的占用数量
-Crawler.prototype.hostSchedule = function hostSchedule(){
-    if(!global.hostQueue){
-        initHost();
-    }
-    let resched = true;
-    let stat = new Array(global.hosts.length);
-    stat.fill(0);
-    for(let i = 0; i < global.hostQueue.length; i++){
-        let hcb = global.hostQueue[i];
-        if(hcb.expire < Date.now()){
-            //global.hostQueue.pop();
-        }
-        else if(hcb.stunum === this.stunum){
-            resched = false;
-            break;
-        }
-        else{
-            for(let j = 0; j < global.hosts.length; j++){
-                if(hcb.host === global.hosts[j]){
-                    stat[j]++;
-                    break;
-                }
-            }
-        }
-    }
-
-    if(resched){
-        let minLoad = stat[0];
-        let minHost = global.hosts[0];
-        for(let i = 1; i < global.hosts.length; i++){
-            if(stat[i] < minLoad && global.hostStatus[global.hosts[i]].enabled){
-                minLoad = stat[i];
-                minHost = global.hosts[i];
-            }
-        }
-        console.log(this.stunum, 'scheduled from', this.host, 'to', minHost);
-        this.host = minHost;
-        let hcb = new HostControlBlock(this.stunum, minHost);
-        global.hostQueue.push(hcb);
-    }
-    else{
-        console.log(this.stunum, 'no schedule')
-    }
-    return resched;
-};
 
 /*
  * 使用指定的学号和密码登录到教务网，暂时只支持本科生账号
@@ -284,33 +196,43 @@ Crawler.prototype.login = async function login(stunum, pass){
             status: false,
             msg: '未知错误'
         };
-        self.hostSchedule();
-        self.post('/_data/index_login.aspx',
-            {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg: pass},
-            (error, response, buf) => {
-                if(self.badResponse(error, response, buf)){
-                    return;
-                }
-                let body = iconv.decode(buf, 'gb2312');
-                if(body.indexOf('正在加载权限数据') != -1){
-                    loginStatus.status = true;
-                    loginStatus.msg = '登录成功';
-                }
-                else if(body.indexOf('账号或密码不正确') != -1){
-                    loginStatus.status = false;
-                    loginStatus.msg = '账号或密码不正确';
-                }
-                else if(body.indexOf('该账号尚未分配角色') != -1){
-                    loginStatus.status = false;
-                    loginStatus.msg = '该账号不存在';
-                }
-                else if(body.indexOf('此页面发现一个意外') != -1){
-                    loginStatus.status = false;
-                    loginStatus.msg = '参数错误';
-                }
-                self.loginStatus = loginStatus;
-                resolve(loginStatus);
-        })
+        // self.get('/_data/index_login.aspx', (error, response, buf) => {
+        //     if(error){
+        //         reject(error);
+        //         return;
+        //     }
+            self.post('/_data/index_login.aspx',
+                {Sel_Type:'STU', txt_dsdsdsdjkjkjc:stunum, efdfdfuuyyuuckjg: pass},
+                (error, response, buf) => {
+                    if(error){
+                        reject(error);
+                        return;
+                    }
+                    let body = iconv.decode(buf, 'gb2312');
+                    if(body.indexOf('正在加载权限数据') != -1){
+                        loginStatus.status = true;
+                        loginStatus.msg = '登录成功';
+                    }
+                    else if(body.indexOf('账号或密码不正确') != -1){
+                        loginStatus.status = false;
+                        loginStatus.msg = '账号或密码不正确';
+                    }
+                    else if(body.indexOf('该账号尚未分配角色') != -1){
+                        loginStatus.status = false;
+                        loginStatus.msg = '该账号不存在';
+                    }
+                    else if(body.indexOf('此页面发现一个意外') != -1){
+                        loginStatus.status = false;
+                        loginStatus.msg = '参数错误';
+                    }
+                    else if(body.indexOf('您尚未报到注册成功') != -1){
+                        loginStatus.status = false;
+                        loginStatus.msg = '您尚未报到注册成功';
+                    }
+                    self.loginStatus = loginStatus;
+                    resolve(loginStatus);
+            })
+        // });
     });
 }
 
@@ -402,6 +324,7 @@ Crawler.prototype.exams = async function exams(semester) {
                     });
             }
         });
+
     });
 }
 
@@ -482,12 +405,6 @@ function asynctest(){
     console.log('async:total', (Date.now() - origin));
 }
 
-async function schedule_test() {
-    for(let i = 0; i < 1000; i++){
-        let crawler = new Crawler(null, 20151597+i);
-        crawler.hostSchedule();
-    }
-}
 // asynctest();
 // synctest();
 
