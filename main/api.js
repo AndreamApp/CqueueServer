@@ -9,7 +9,7 @@ function API(){
     this.crawler = null;
     this.parser = new Parser();
     this.db = new DB();
-    this.curr_semester = '20171';
+    this.curr_semester = '20180';
 }
 
 API.prototype.connect = async function connect(){
@@ -135,15 +135,19 @@ API.prototype.getTable = async function getTable(stunum){
     }
     this.crawler = new Crawler(null, stunum);
     let loginResult = await this.crawler.login(stunum, userInfo.password);
+    let res = null
     if(loginResult.status){
         let tableHtml = await this.crawler.table(this.curr_semester);
         let table = await this.parser.parseTableFromHTML(tableHtml);
         await this.db.setTable(stunum, table);
-        return good(table);
+        console.log(table);
+        res = good(table);
     }
     else{
-        return bad(loginResult.msg);
+        res = bad(loginResult.msg);
     }
+    res['semester_start_date'] = '2018-09-02';
+    return res;
 }
 
 API.prototype.getExams = async function getExams(stunum){

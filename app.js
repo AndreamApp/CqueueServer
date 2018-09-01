@@ -80,10 +80,10 @@ server.listen(443, function () {
     console.log("应用实例，访问地址为 http://%s:%s", host, port)
 });
 
-// var httpServer = app.listen(80, function () {
-//     var host = httpServer.address().address
-//     var port = httpServer.address().port
-//     console.log("应用实例，访问地址为 http://%s:%s", host, port)
-// });
+var httpServer = app.listen(80, function () {
+    var host = httpServer.address().address
+    var port = httpServer.address().port
+    console.log("应用实例，访问地址为 http://%s:%s", host, port)
+});
 
 module.exports = app;

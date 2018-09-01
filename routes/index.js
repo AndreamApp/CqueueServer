@@ -107,11 +107,11 @@ router.get('/checkUpdate', async function(req, res) {
         msg: null,
         err: null,
         data: {
-            version_code: 1,
-            version_name: '0.1.1',
+            version_code: 2,
+            version_name: '0.0.2',
             app_name: 'Cqueue',
-            description: '课表和成绩考试查询',
-            download_url: 'https://cqu.andreamapp.com/download/0.0.1.apk'
+            description: 'v0.0.2 自动获取开学日期，迎接新学期~',
+            download_url: 'https://www.coolapk.com/apk/com.andreamapp.cqu'
         }
     });
 });
