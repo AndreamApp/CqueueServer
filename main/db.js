@@ -163,7 +163,7 @@ function setMyTable(stunum, table){
 }
 
 DB.prototype.getTable = async function getTable(stunum){
-    let user = await getUserInfo(stunum);
+    let user = await this.getUserInfo(stunum);
     if(user){
         return user.table;
     }

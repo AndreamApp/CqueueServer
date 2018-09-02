@@ -92,9 +92,11 @@ API.prototype.login = async function login(stunum, pass){
             await this.db.setGrade(stunum, grade);
             */
         }
-        else{
-            return bad(loginResult.msg);
+        else if(pass == userInfo['password']){
         }
+		else{
+            return bad('账号或密码不正确');
+		}
     }
 
     // filter some private field
@@ -144,7 +146,7 @@ API.prototype.getTable = async function getTable(stunum){
         res = good(table);
     }
     else{
-        res = bad(loginResult.msg);
+        res = good(userInfo['table']);
     }
     res['semester_start_date'] = '2018-09-02';
     return res;
@@ -167,7 +169,8 @@ API.prototype.getExams = async function getExams(stunum){
         return good(exams);
     }
     else{
-        return bad(loginResult.msg);
+        //return bad(loginResult.msg);
+        return good(userInfo['exams']);
     }
 }
 
@@ -188,7 +191,8 @@ API.prototype.getGrade = async function getGrade(stunum){
         return good(grade);
     }
     else{
-        return bad(loginResult.msg);
+        //return bad(loginResult.msg);
+        return good(userInfo['grade']);
     }
 }
 
