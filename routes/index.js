@@ -6,6 +6,14 @@ let router = express.Router();
  * 使用session：http://wiki.jikexueyuan.com/project/node-lessons/cookie-session.html
  * */
 
+/*
+ * login(stunum, password) / logout(stunum) / getUserInfo(stunum) / getUserList(stunum)
+** getTable(stunum) / getExams(stunum) / getGrade(stunum)
+ * uploadFeedback(stunum) / getFeedbacks(stunum)
+ * crash(stunum) / getCrashList(stunum)
+ * like(stunum) / checkUpdate(stunum)
+ * */
+
 const api = require('../main/api');
 
 api.connect();
@@ -110,7 +118,7 @@ router.get('/checkUpdate', async function(req, res) {
             version_code: 2,
             version_name: '0.0.2',
             app_name: 'Cqueue',
-            description: 'v0.0.2 自动获取开学日期，迎接新学期~',
+            description: 'v0.0.2 自动计算开学日期，迎接新学期~',
             download_url: 'https://www.coolapk.com/apk/com.andreamapp.cqu'
         }
     });

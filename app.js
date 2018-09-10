@@ -1,18 +1,18 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var bodyParser = require('body-parser');
-var https = require('https');
-var fs = require('fs');
-let RateLimit = require('express-rate-limit');
-let session = require('express-session');
-let MongoStore = require('connect-mongo')(session);
+const express = require('express');
+const path = require('path');
+const favicon = require('serve-favicon');
+const logger = require('morgan');
+const bodyParser = require('body-parser');
+const https = require('https');
+const fs = require('fs');
+const RateLimit = require('express-rate-limit');
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
 
-var index = require('./routes/index');
-var users = require('./routes/users');
+const index = require('./routes/index');
+const users = require('./routes/users');
 
-var app = express();
+const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // rate limit
-var limiter = new RateLimit({
+let limiter = new RateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
     delayMs: 0, // disable delaying - full speed until the max limit is reached
@@ -51,7 +51,7 @@ app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    var err = new Error('Not Found');
+    let err = new Error('Not Found');
     err.status = 404;
     next(err);
 });
@@ -67,22 +67,24 @@ app.use(function (err, req, res, next) {
     res.render('error');
 });
 
-var options = {
+// https server
+let options = {
     cert: fs.readFileSync(__dirname  + "/key/cert.pem"),
     key: fs.readFileSync(__dirname  + "/key/key.pem"),
     passphrase: "andreamApp97"
 };
-var server = https.createServer(options, app);
+let server = https.createServer(options, app);
 
 server.listen(443, function () {
-    var host = server.address().address
-    var port = server.address().port
+    let host = server.address().address
+    let port = server.address().port
     console.log("应用实例，访问地址为 http://%s:%s", host, port)
 });
 
-var httpServer = app.listen(80, function () {
-    var host = httpServer.address().address
-    var port = httpServer.address().port
+// http server
+let httpServer = app.listen(80, function () {
+    let host = httpServer.address().address
+    let port = httpServer.address().port
     console.log("应用实例，访问地址为 http://%s:%s", host, port)
 });
 

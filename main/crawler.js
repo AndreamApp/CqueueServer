@@ -1,7 +1,7 @@
 const fs = require("fs");
-const urlencode = require('urlencode')
+const urlencode = require('urlencode');
 const iconv = require('iconv-lite');
-const md5 = require('./md5.js')
+const md5 = require('./md5.js');
 const FileCookieStore = require('tough-cookie-filestore');
 let request = require('request');
 //require('request-debug')(request);
@@ -97,7 +97,7 @@ Crawler.prototype.badResponse = function badResponse(error, response, reject){
         return true;
     }
     return false;
-}
+};
 
 /*
  * 简单封装的get函数
@@ -106,7 +106,7 @@ Crawler.prototype.badResponse = function badResponse(error, response, reject){
  * */
 Crawler.prototype.get = function get(url, callback){
     this.getWithRedirect(url, true, callback);
-}
+};
 
 /*
  * 简单封装的get函数
@@ -128,7 +128,7 @@ Crawler.prototype.getWithRedirect = function get(url, redirect, callback){
         time: true,
         forever: true
     }, callback);
-}
+};
 
 /*
  * 简单封装的post函数
@@ -154,7 +154,7 @@ Crawler.prototype.post = function post(url, form, callback){
         time: true,
         forever: true
     }, callback);
-}
+};
 
 /*
  * 检查当前是否已经登录，在获取信息之前，一定要先调用这个函数
@@ -180,7 +180,7 @@ Crawler.prototype.checkLoginStatus = async function checkLoginStatus(){
             }
         })
     });
-}
+};
 
 /*
  * 使用指定的学号和密码登录到教务网，暂时只支持本科生账号
@@ -209,23 +209,23 @@ Crawler.prototype.login = async function login(stunum, pass){
                         return;
                     }
                     let body = iconv.decode(buf, 'gb2312');
-                    if(body.indexOf('正在加载权限数据') != -1){
+                    if(body.indexOf('正在加载权限数据') !== -1){
                         loginStatus.status = true;
                         loginStatus.msg = '登录成功';
                     }
-                    else if(body.indexOf('账号或密码不正确') != -1){
+                    else if(body.indexOf('账号或密码不正确') !== -1){
                         loginStatus.status = false;
                         loginStatus.msg = '账号或密码不正确';
                     }
-                    else if(body.indexOf('该账号尚未分配角色') != -1){
+                    else if(body.indexOf('该账号尚未分配角色') !== -1){
                         loginStatus.status = false;
                         loginStatus.msg = '该账号不存在';
                     }
-                    else if(body.indexOf('此页面发现一个意外') != -1){
+                    else if(body.indexOf('此页面发现一个意外') !== -1){
                         loginStatus.status = false;
                         loginStatus.msg = '参数错误';
                     }
-                    else if(body.indexOf('您尚未报到注册成功') != -1){
+                    else if(body.indexOf('您尚未报到注册成功') !== -1){
                         loginStatus.status = false;
                         loginStatus.msg = '您尚未报到注册成功';
                     }
@@ -234,7 +234,7 @@ Crawler.prototype.login = async function login(stunum, pass){
             })
         // });
     });
-}
+};
 
 /*
  * 注销账户，删除缓存的cookie
@@ -245,7 +245,7 @@ Crawler.prototype.logout = async function logout(){
     return new Promise((resolve, reject) => {
         resolve(deleteJar(self.stunum));
     });
-}
+};
 
 /*
  * 抓取当前登录账户的个人信息
@@ -263,7 +263,7 @@ Crawler.prototype.info = async function info(){
             resolve(body);
         });
     });
-}
+};
 
 /*
  * 抓取当前登录用户的指定学期的课表
@@ -285,7 +285,7 @@ Crawler.prototype.table = async function table(semester) {
                 resolve(body);
             });
     });
-}
+};
 
 /*
  * 抓取当前登录用户的考试信息
@@ -318,7 +318,7 @@ Crawler.prototype.exams = async function exams(semester) {
                         let body = iconv.decode(buf, 'gb2312');
                         htmlArr.push(body);
                         //console.log(response.timingPhases);
-                        if(htmlArr.length == examArr.length){
+                        if(htmlArr.length === examArr.length){
                             resolve(htmlArr);
                         }
                     });
@@ -326,7 +326,7 @@ Crawler.prototype.exams = async function exams(semester) {
         });
 
     });
-}
+};
 
 /*
  * 抓取当前登录用户的所有学年学期的成绩
@@ -348,7 +348,7 @@ Crawler.prototype.grade = async function grade() {
                 resolve(body);
             });
     });
-}
+};
 
 async function synctest(){
     let crawler = new Crawler(null, 20151597);

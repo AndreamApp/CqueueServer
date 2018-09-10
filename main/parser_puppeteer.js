@@ -89,7 +89,7 @@ async function login(page){
     await page.keyboard.type('20151597');
     // 输入密码
     await page.click(PASSWORD_SELECTOR);
-    await page.keyboard.type('976655');
+    await page.keyboard.type('237231');
     // 登录
     await page.click(LOGIN_SELECTOR);
     await page.waitForNavigation();
@@ -619,7 +619,7 @@ async function interceptPage(page){
 async function main(){
     let start = Date.now();
 
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: false});
 
     const page = await browser.newPage();
     //await page.emulate(devices['iPhone 6']);

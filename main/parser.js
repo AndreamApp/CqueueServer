@@ -1,7 +1,7 @@
 const htmlparser = require("htmlparser2");
 
 String.prototype.replaceAll = function(search, replacement) {
-    var target = this;
+    let target = this;
     return target.replace(new RegExp(search, 'g'), replacement);
 };
 
@@ -43,7 +43,7 @@ function Course(course_name, course_code, credit, hours_all, hours_teach, hours_
     this.hours_teach = hours_teach;
     this.hours_practice = hours_practice;
     this.teacher = teacher;
-    this.schedule = new Array();
+    this.schedule = [];
 }
 
 /*
@@ -95,7 +95,7 @@ Parser.prototype.parseInfoFromHTML = async function parseInfoFromHTML(content){
         let parser = new htmlparser.Parser({
             lastText: '',
             onopentag: function(name, attribs){
-                if(name.toLowerCase() == "html"){
+                if(name.toLowerCase() === "html"){
                 }
             },
             ontext: function(text){
@@ -125,7 +125,7 @@ Parser.prototype.parseInfoFromHTML = async function parseInfoFromHTML(content){
                 this.lastText = text;
             },
             onclosetag: function(tagname){
-                if(tagname.toLowerCase() == "html"){
+                if(tagname.toLowerCase() === "html"){
                     resolve(user);
                 }
             }
@@ -133,7 +133,7 @@ Parser.prototype.parseInfoFromHTML = async function parseInfoFromHTML(content){
         parser.write(content.replaceAll('&nbsp;', '').replaceAll(' ', ''));
         parser.end();
     });
-}
+};
 
 /*
  * 解析课程表的解析器函数，根据输入的html，resolve一个Course数组
@@ -178,7 +178,7 @@ function getTableParser(resolve, reject){
             switch(name.toLowerCase()){
                 case 'thead':
                     this.currentTag = 'thead';
-                    this.keyTransformer = new Array(); // 最多不会超过15个键
+                    this.keyTransformer = []; // 最多不会超过15个键
                     break;
                 case 'tbody':
                     this.currentTag = 'tbody';
@@ -187,11 +187,11 @@ function getTableParser(resolve, reject){
                     this.rowIndex = -1;
                     break;
                 case 'td':
-                    if(this.currentTag == 'tbody'){
-                        if(this.keyTransformer[this.rowIndex] == 'course_name'){
+                    if(this.currentTag === 'tbody'){
+                        if(this.keyTransformer[this.rowIndex] === 'course_name'){
                             // 追加课程
                             if(attribs['hidevalue']){
-                                appendingSchedule = true;
+                                this.appendingSchedule = true;
                             }
                             // 开启新课程
                             else{
@@ -210,7 +210,7 @@ function getTableParser(resolve, reject){
             switch(this.currentTag){
                 // 生成keyTansformer
                 case 'thead':
-                    if('时间' == text){
+                    if('时间' === text){
                         // 跳过时间节点，用周次和节次替换
                         this.keyTransformer.push('weeks');
                         this.keyTransformer.push('classtime');
@@ -238,12 +238,12 @@ function getTableParser(resolve, reject){
                             break;
                         default:
                             if(!this.appendingSchedule){
-                                if(key == 'course_name'){
-                                    if(this.currentCourse.course_name != text){
+                                if(key === 'course_name'){
+                                    if(this.currentCourse.course_name !== text){
                                         let code = text.substring(text.indexOf('[') + 1, text.indexOf(']'));
                                         let name = text.substring(text.indexOf(']') + 1);
                                         this.currentCourse = new Course(name, code);
-                                        appendingSchedule = false;
+                                        this.appendingSchedule = false;
                                     }
                                 }
                                 else if(key){
@@ -256,13 +256,13 @@ function getTableParser(resolve, reject){
             }
         },
         onclosetag: function(tagname){
-            if(tagname == 'thead'){
+            if(tagname === 'thead'){
                 this.currentTag = null;
             }
-            if(tagname == 'tbody'){
+            if(tagname === 'tbody'){
                 this.currentTag = null;
             }
-            if(tagname == 'html'){
+            if(tagname === 'html'){
                 resolve(this.courses);
             }
         }
@@ -281,7 +281,7 @@ Parser.prototype.parseTableFromHTML = async function parseTableFromHTML(content)
         parser.write(content.replaceAll('<br>', ''));
         parser.end();
     });
-}
+};
 
 /*
  * 解析一个html页面，返回一个tbody的数组，数组层级为：tbody[] -> tr[] -> td[] -> {value, attrs} （三维数组）
@@ -330,7 +330,7 @@ function getGeneralTBodyParser(resolve, reject, keepattrs){
             }
         },
         ontext: function(text){
-            if(this.currentTag == 'td'){
+            if(this.currentTag === 'td'){
                 this.tempTd.value = text;
             }
         },
@@ -373,7 +373,7 @@ Parser.prototype.parseExamsFromHTML = async function parseExamsFromHTML(text){
     for(let i = 0; i < generalData.length; i++){
         let table = generalData[i];
         // 标题行
-        if(table.length == 1 && table[0].length == 3){
+        if(table.length === 1 && table[0].length === 3){
             i++; // 跳过列名行
             continue;
         }
@@ -398,7 +398,7 @@ Parser.prototype.parseExamsFromHTML = async function parseExamsFromHTML(text){
         }
     }
     return examList;
-}
+};
 
 /*
  * 从html数组中解析考试数据
@@ -412,7 +412,7 @@ Parser.prototype.parseExamsFromHTMLArr = async function parseExamsFromHTMLArr(ht
         arr = arr.concat(examTable);
     }
     return arr;
-}
+};
 
 /*
  * 从html中解析出Grade数组（借助getGeneralTBodyParser）
@@ -506,7 +506,7 @@ Parser.prototype.parseGradesFromHTML = async function parseGradesFromHTML(text){
         currSemester.semester = table[0][0].value;
         currSemester.semester = currSemester.semester.replaceAll('学年学期：', '');
         currSemester.semester = currSemester.semester.replaceAll('学年学期:', '');
-        currSemester.data = new Array();
+        currSemester.data = [];
 
         i++;
         table = generalData[i];
@@ -526,10 +526,10 @@ Parser.prototype.parseGradesFromHTML = async function parseGradesFromHTML(text){
         gradeList.push(currSemester);
     }
     return gradeList;
-}
+};
 
 async function synctest(){
-    const Crawler = require('./crawler')
+    const Crawler = require('./crawler');
     let crawler = new Crawler();
     let parser = new Parser();
     console.time('parse');
@@ -554,7 +554,7 @@ async function synctest(){
 }
 
 function asynctest(){
-    const Crawler = require('./crawler')
+    const Crawler = require('./crawler');
     let crawler = new Crawler();
     let parser = new Parser();
     console.time('parseInfo');

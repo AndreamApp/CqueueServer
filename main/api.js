@@ -1,8 +1,8 @@
-
-const Crawler = require('./crawler')
-const Parser = require('./parser')
-const DB = require('./db')
-const md5 = require('./md5')
+const Crawler = require('./crawler');
+const Parser = require('./parser');
+const DB = require('./db');
+const md5 = require('./md5');
+const fs = require('fs');
 
 
 function API(){
@@ -14,11 +14,11 @@ function API(){
 
 API.prototype.connect = async function connect(){
     await this.db.connect();
-}
+};
 
 API.prototype.close = async function close(){
     await this.db.close();
-}
+};
 
 function good(data, msg){
     return {
@@ -103,7 +103,7 @@ API.prototype.login = async function login(stunum, pass){
     delete userInfo['password'];
 
     return good(userInfo);
-}
+};
 
 API.prototype.logout = async function logout(stunum){
     if(!stunum || stunum === ''){
@@ -111,13 +111,13 @@ API.prototype.logout = async function logout(stunum){
     }
     this.crawler = new Crawler(null, stunum);
     return good(await this.crawler.logout(stunum));
-}
+};
 
 
 API.prototype.getUserInfo = async function getUserInfo(stunum){
     let userInfo = this.db.getUserInfo(stunum);
     return await this.login(stunum, userInfo.password);
-}
+};
 
 API.prototype.getUserList = async function getUserList(stunum){
     if(stunum !== '20151597') {
@@ -125,7 +125,7 @@ API.prototype.getUserList = async function getUserList(stunum){
     }
     let res = this.db.getUserList();
     return res;
-}
+};
 
 API.prototype.getTable = async function getTable(stunum){
     if(!stunum || stunum === ''){
@@ -137,10 +137,12 @@ API.prototype.getTable = async function getTable(stunum){
     }
     this.crawler = new Crawler(null, stunum);
     let loginResult = await this.crawler.login(stunum, userInfo.password);
-    let res = null
+    let res = null;
     if(loginResult.status){
         let tableHtml = await this.crawler.table(this.curr_semester);
+		fs.writeFileSync('table.html', tableHtml);
         let table = await this.parser.parseTableFromHTML(tableHtml);
+		fs.writeFileSync('table.json', JSON.stringify(table));
         await this.db.setTable(stunum, table);
         console.log(table);
         res = good(table);
@@ -150,7 +152,7 @@ API.prototype.getTable = async function getTable(stunum){
     }
     res['semester_start_date'] = '2018-09-02';
     return res;
-}
+};
 
 API.prototype.getExams = async function getExams(stunum){
     if(!stunum || stunum === ''){
@@ -172,7 +174,7 @@ API.prototype.getExams = async function getExams(stunum){
         //return bad(loginResult.msg);
         return good(userInfo['exams']);
     }
-}
+};
 
 API.prototype.getGrade = async function getGrade(stunum){
     if(!stunum || stunum === ''){
@@ -194,7 +196,7 @@ API.prototype.getGrade = async function getGrade(stunum){
         //return bad(loginResult.msg);
         return good(userInfo['grade']);
     }
-}
+};
 
 API.prototype.like = async function like(stunum) {
     if(!stunum || stunum === ''){
@@ -202,7 +204,7 @@ API.prototype.like = async function like(stunum) {
     }
     let likeNum = await this.db.like(stunum);
     return good(null, '有'+likeNum+'位小伙伴和你一样喜欢我');
-}
+};
 
 API.prototype.uploadFeedback = async function uploadFeedback(stunum, message, stackTrack) {
     if(!stunum || stunum === ''){
@@ -210,7 +212,7 @@ API.prototype.uploadFeedback = async function uploadFeedback(stunum, message, st
     }
     let res = await this.db.uploadFeedback(stunum, message, stackTrack);
     return good(res);
-}
+};
 
 API.prototype.getFeedbacks = async function getFeedbacks(stunum) {
     if(!stunum || stunum === ''){
@@ -218,7 +220,7 @@ API.prototype.getFeedbacks = async function getFeedbacks(stunum) {
     }
     let res = await this.db.getFeedbacks();
     return good(res);
-}
+};
 
 
 API.prototype.crashReport = async function crashReport(stunum, data) {
@@ -227,7 +229,7 @@ API.prototype.crashReport = async function crashReport(stunum, data) {
     }
     let res = await this.db.crashReport(stunum, data);
     return good(res);
-}
+};
 
 API.prototype.getCrashList = async function getCrashList(stunum) {
     if(stunum !== '20151597'){
@@ -235,7 +237,7 @@ API.prototype.getCrashList = async function getCrashList(stunum) {
     }
     let res = await this.db.getCrashList();
     return good(res);
-}
+};
 
 async function synctest(){
     let api = new API();
