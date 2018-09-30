@@ -18,10 +18,6 @@ const api = require('../main/api');
 
 api.connect();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
 
 router.get('/login', async function(req, res) {
     let stunum = req.query.stunum;

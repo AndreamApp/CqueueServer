@@ -4,6 +4,7 @@ const iconv = require('iconv-lite');
 const md5 = require('./md5.js');
 const FileCookieStore = require('tough-cookie-filestore');
 let request = require('request');
+const config = require('../config');
 //require('request-debug')(request);
 
 /*
@@ -12,9 +13,8 @@ let request = require('request');
  * */
 
 //const DEFAULT_HOST = 'http://jxgl.cqu.edu.cn'; // 教务网域名
-const DEFAULT_HOST = 'http://202.202.1.41'; // 教务网域名
-
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_HOST = config.CRAWLER_DEFAULT_HOST; // 教务网域名
+const DEFAULT_TIMEOUT = config.CRAWLER_DEFAULT_TIMEOUT;
 
 function getJar(stunum){
     let cookiepath = __dirname + "/cookies/"+stunum+".json";

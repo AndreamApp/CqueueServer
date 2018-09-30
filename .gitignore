@@ -1,6 +1,9 @@
 node_modules
-/data
-/.idea
+data/
+.idea/
 /main/cookies
 /proxy.js
-/doc
+doc/
+key/
+bin/
+config.js

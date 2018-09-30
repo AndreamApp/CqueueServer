@@ -6,24 +6,28 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "body-parser": "~1.18.2",
+    "body-parser": "^1.18.3",
     "connect-mongo": "^2.0.1",
     "debug": "~2.6.9",
-    "eslint": "^4.14.0",
+    "eslint": "^4.19.1",
     "express": "~4.15.5",
     "express-rate-limit": "^2.11.0",
     "express-session": "^1.15.6",
     "htmlparser2": "^3.9.2",
     "iconv": "^2.3.0",
-    "iconv-lite": "^0.4.19",
+    "iconv-lite": "^0.4.24",
     "ioredis": "^3.2.2",
     "jade": "~1.11.0",
+    "moment": "^2.22.2",
     "mongodb": "^3.0.2",
+    "mongoose": "^5.2.14",
     "morgan": "~1.9.0",
     "nodemailer": "^4.6.4",
+    "puppeteer": "^1.8.0",
     "request": "^2.83.0",
     "serve-favicon": "~2.4.5",
     "tough-cookie-filestore": "^0.0.1",
-    "urlencode": "^1.1.0"
+    "urlencode": "^1.1.0",
+    "vue": "^2.5.17"
   }
 }
