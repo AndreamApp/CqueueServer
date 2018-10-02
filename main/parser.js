@@ -195,9 +195,7 @@ function getTableParser(resolve, reject){
                             }
                             // 开启新课程
                             else{
-                                if(this.currentCourse){
-                                    this.courses.push(this.currentCourse);
-                                }
+                                this.appendingSchedule = false;
                             }
                         }
                         this.rowIndex++;
@@ -237,18 +235,18 @@ function getTableParser(resolve, reject){
                             this.currentCourse.schedule[this.currentCourse.schedule.length-1].classroom = text;
                             break;
                         default:
-                            if(!this.appendingSchedule){
-                                if(key === 'course_name'){
-                                    if(this.currentCourse.course_name !== text){
-                                        let code = text.substring(text.indexOf('[') + 1, text.indexOf(']'));
-                                        let name = text.substring(text.indexOf(']') + 1);
-                                        this.currentCourse = new Course(name, code);
-                                        this.appendingSchedule = false;
+                            if(key === 'course_name'){
+                                if(this.currentCourse.course_name !== text){
+                                    let code = text.substring(text.indexOf('[') + 1, text.indexOf(']'));
+                                    let name = text.substring(text.indexOf(']') + 1);
+                                    if(this.currentCourse){
+                                        this.courses.push(this.currentCourse);
                                     }
+                                    this.currentCourse = new Course(name, code);
                                 }
-                                else if(key){
-                                    this.currentCourse[key] = text;
-                                }
+                            }
+                            else if(key && text){
+                                this.currentCourse[key] = text;
                             }
                             break;
                     }
