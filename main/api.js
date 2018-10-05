@@ -3,6 +3,7 @@ const Parser = require('./parser');
 const DB = require('./db');
 const md5 = require('./md5');
 const fs = require('fs');
+const axios = require('axios');
 
 
 function API(){
@@ -47,30 +48,50 @@ function chkpwd(stunum, password){
     return encrypt;
 }
 
+async function registerChatAccount(stunum, pass, name) {
+    // register on chat.andream.app
+    try{
+        await axios.post('https://chat.andream.app/api/v1/users.register', {
+            username: stunum,
+            email: stunum + '@cqu.edu.cn',
+            pass: pass,
+            name: name
+        });
+    }
+    catch(err) {
+        console.error(err);
+        return bad('绑定聊天账号失败');
+    }
+}
+
 API.prototype.login = async function login(stunum, pass){
     this.crawler = new Crawler(null, stunum);
     if(!(stunum && pass)){
         return bad('请输入学号和密码！');
     }
-    pass = chkpwd(stunum, pass); // only process login with encrypted password
+    let encrypted_pass = chkpwd(stunum, pass); // only process login with encrypted password
     let loginStatus = await this.crawler.checkLoginStatus();//this.crawler.login(stunum, password);
     let userInfo = await this.db.getUserInfo(stunum);
     // 登录Cookie缓存有效
     if(loginStatus){
         // 核对密码
-        if(pass !== userInfo['password']){
+        if(encrypted_pass !== userInfo['password']){
             return bad('账号或密码不正确');
         }
     }
     // 登录Cookie过期 或 尚未登录
     else{
-        let loginResult = await this.crawler.login(stunum, pass);
+        let loginResult = await this.crawler.login(stunum, encrypted_pass);
         if(loginResult.status){
             // first login or data changed, save to database
-            if(!userInfo || pass !== userInfo['password']){
+            if(!userInfo || !userInfo['chat_username'] || encrypted_pass !== userInfo['password']){
                 let infoHtml = await this.crawler.info();
                 let info = await this.parser.parseInfoFromHTML(infoHtml);
-                await this.db.register(stunum, pass, info);
+                // register chat account if doesn't have before
+                if(!userInfo || !userInfo['chat_username']){
+                    await registerChatAccount(stunum, pass, info['name']);
+                }
+                await this.db.register(stunum, encrypted_pass, info);
                 userInfo = await this.db.getUserInfo(stunum);
             }
             // use cached
@@ -92,7 +113,7 @@ API.prototype.login = async function login(stunum, pass){
             await this.db.setGrade(stunum, grade);
             */
         }
-        else if(pass == userInfo['password']){
+        else if(encrypted_pass == userInfo['password']){
         }
 		else{
             return bad('账号或密码不正确');

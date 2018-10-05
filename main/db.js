@@ -1,4 +1,5 @@
 const MongoClient = require('mongodb').MongoClient;
+const config = require('../config');
 
 /*
  * 参考资料：
@@ -13,8 +14,8 @@ const MongoClient = require('mongodb').MongoClient;
  *     deleteMany({a:2});
  * */
 
-const url = 'mongodb://localhost:27017';
-const dbName = 'Scalar';
+const url = config.MONGO_URL;
+const dbName = config.MONGO_DB_NAME;
 
 // let table = db.collection('table');
 // let exam = db.collection('exam');
@@ -25,7 +26,7 @@ function DB(){
     this.userCol = null;
 }
 
-function User(stunum, password, name, sex, birthday, nation, academy, class_name, tel, table, mytable, exams, myexams, grade, todo){
+function User(stunum, password, name, sex, birthday, nation, academy, class_name, tel, table, mytable, exams, myexams, grade, todo, chat_username){
     this.stunum = stunum;
     this.password = password;
     this.name = name;
@@ -41,6 +42,7 @@ function User(stunum, password, name, sex, birthday, nation, academy, class_name
     this.myexams = myexams;
     this.grade = grade;
     this.todo = todo;
+    this.chat_username = chat_username;
 }
 
 /*
@@ -111,7 +113,7 @@ function login(stunum, password){
  */
 DB.prototype.register = async function register(stunum, password, userInfo){
     let user = new User(stunum, password,
-        userInfo.name, userInfo.sex, userInfo.birthday, userInfo.nation, userInfo.academy, userInfo.class_name);
+        userInfo.name, userInfo.sex, userInfo.birthday, userInfo.nation, userInfo.academy, userInfo.class_name, userInfo.stunum);
     let r = await this.userCol.updateOne({stunum: stunum}, { $set: user }, { upsert: true });
     return true;
 };
