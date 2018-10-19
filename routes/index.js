@@ -86,6 +86,22 @@ router.get('/getGrade', async function(req, res) {
     res.json(result);
 });
 
+router.get('/searchCourse', async function(req, res) {
+    let key = req.query.key;
+    let stunum = req.session.stunum;
+    let result = await api.searchCourse(stunum, key);
+    res.set({'Cache-Control': 'public, max-age=60'});
+    res.json(result);
+});
+
+router.get('/getCourseByAcademy', async function(req, res) {
+    let academy = req.query.academy. page = req.query.page;
+    let stunum = req.session.stunum;
+    let result = await api.searchCourse(stunum, academy, page);
+    res.set({'Cache-Control': 'public, max-age=60'});
+    res.json(result);
+});
+
 router.get('/like', async function(req, res) {
     let stunum = req.session.stunum;
     let result = await api.like(stunum);

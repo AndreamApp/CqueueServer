@@ -4,6 +4,7 @@ const iconv = require('iconv-lite');
 const md5 = require('./md5.js');
 const FileCookieStore = require('tough-cookie-filestore');
 let request = require('request');
+const assert = require('assert');
 const config = require('../config');
 //require('request-debug')(request);
 
@@ -350,13 +351,48 @@ Crawler.prototype.grade = async function grade() {
     });
 };
 
+/*
+ * 抓取课程信息
+ * id: 课程id，一般为一个6位数字
+ * */
+Crawler.prototype.course = async function course(id) {
+    const self = this;
+    return new Promise((resolve, reject) => {
+        self.post('/ZNPK/KBFB_LessonSel_rpt.aspx',
+            {
+                Sel_XNXQ: config.semester,
+                txtkc:'',
+                Sel_KC: id,
+                rad: 1,
+                Submit01: '%BC%EC%CB%F7', // 检索
+            },
+            (error, response, buf) => {
+                if(self.badResponse(error, response, reject)){
+                    return;
+                }
+                let body = iconv.decode(buf, 'gb2312');
+                //console.log(response.timingPhases);
+                resolve(body);
+            });
+    });
+};
+
+function chkpwd(stunum, password){
+    if(!password) return null;
+    let schoolcode = "10611";
+    let yhm = stunum;
+    let encrypt = md5(yhm+md5(password).substring(0,30).toUpperCase()+schoolcode).substring(0,30).toUpperCase();
+    return encrypt;
+}
+
 async function synctest(){
     let crawler = new Crawler(null, 20151597);
     let start = Date.now();
     let end;
     let origin = start;
 
-    let result = await crawler.login('20151597', '976655');
+    let encrypted_pass = chkpwd('20151597', '237231');
+    let result = await crawler.login('20151597', encrypted_pass);
     console.log(result.msg);
 
     let infoBody = await crawler.info();
@@ -374,6 +410,11 @@ async function synctest(){
     let gradeBody = await crawler.grade();
     // console.log(gradeBody);
     console.log('grade', (end = Date.now()) - start); start = end;
+
+    let courseBody = await crawler.course(378214);
+    // console.log(courseBody);
+    assert.strictEqual(courseBody.indexOf('重庆大学课程课表') !== -1, true);
+    console.log('course', (end = Date.now()) - start); start = end;
 
     console.log('total', end - origin);
 }
@@ -407,10 +448,5 @@ function asynctest(){
 
 // asynctest();
 // synctest();
-
-// (async () => {
-//     let crawler = new Crawler(null, 20151597);
-//     await crawler.checkLoginStatus();
-// })();
 
 module.exports = Crawler;

@@ -219,6 +219,30 @@ API.prototype.getGrade = async function getGrade(stunum){
     }
 };
 
+API.prototype.searchCourse = async function (stunum, key, page) {
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    let userInfo = await this.db.getUserInfo(stunum);
+    if(!userInfo){
+        return bad('请先登录');
+    }
+    let courses = await this.db.searchCourse(key, page);
+    return good(courses);
+};
+
+API.prototype.getCourseByAcademy = async function (stunum, academy, page) {
+    if(!stunum || stunum === ''){
+        return bad('登录身份已过期');
+    }
+    let userInfo = await this.db.getUserInfo(stunum);
+    if(!userInfo){
+        return bad('请先登录');
+    }
+    let courses = await this.db.getCourseByAcademy(academy, page);
+    return good(courses);
+};
+
 API.prototype.like = async function like(stunum) {
     if(!stunum || stunum === ''){
         return bad('登录身份已过期');

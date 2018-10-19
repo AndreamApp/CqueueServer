@@ -1,4 +1,5 @@
 const htmlparser = require("htmlparser2");
+const { FullCourse } = require('./bean');
 
 String.prototype.replaceAll = function(search, replacement) {
     let target = this;
@@ -526,34 +527,155 @@ Parser.prototype.parseGradesFromHTML = async function parseGradesFromHTML(text){
     return gradeList;
 };
 
+// REALLY HARD CODE! REALLY UGLY!
+Parser.prototype.parseCourseFromHTML = async function parseCourseFromHTML(text){
+    let generalData = await new Promise(function (resolve, reject){
+        let parser = new htmlparser.Parser(getGeneralTBodyParser(resolve, reject, []), {decodeEntities: true});
+        // 去掉换行
+        // 因为包含学期名字的Table没有</table>标签！出此下策
+        // 因为table的每一行缺少<tr>开始标签，出此下策
+        parser.write((text)
+            .replaceAll('<br>', '')
+            .replaceAll('</tr><td', '</tr><tr><td')
+            .replaceAll('&nbsp;', ' ') // for basic info line. eg. 承担单位：航空航天学院  课程：[AEME30230]计算力学  总学时：40.0  总学分：2.50
+            .replaceAll('学期</td></tr>', '学期</td></tr></table>'));
+        parser.end();
+    });
+    // console.log(JSON.stringify(generalData, null, 4));
+    let courseList = [];
+    // Description
+    let description = generalData[2][0][0].value;
+
+    let academy, code, name, hours_all, credit;
+    let is_exp = description.endsWith('实验');
+    description.split(' ').forEach( text => {
+        if(text && text.indexOf('：') !== -1) {
+            if('承担单位' === text.split('：')[0]) {
+                academy = text.split('：')[1];
+            }
+            else if('课程' === text.split('：')[0]) {
+                let course_text = text.split('：')[1];
+                code = course_text.substring(course_text.indexOf('[') + 1, course_text.indexOf(']'));
+                name = course_text.substring(course_text.indexOf(']') + 1);
+            }
+            else if('总学时' === text.split('：')[0]) {
+                hours_all = text.split('：')[1];
+            }
+            else if('总学分' === text.split('：')[0]) {
+                credit = text.split('：')[1];
+            }
+        }
+    });
+
+    let table = generalData[3];
+    for(let j = 1; j < table.length; ) {
+        let tr = table[j];
+        let course = new FullCourse();
+        // general attributes
+        [course.academy, course.course_code, course.course_name, course.hours_all, course.credit, course.is_exp] =
+            [academy, code, name, hours_all, credit, is_exp];
+        // specific attributes
+        [course.teacher, course.class_no, course.student_cnt, course.class_detail] =
+            [tr[1].value, tr[2].value, tr[3].value, tr[4].value];
+        // schedules
+        do{
+            course.schedule.push({
+                weeks: table[j][5].value,
+                classtime: table[j][6].value,
+                classroom: table[j][7].value,
+            });
+            j++;
+        }
+        while(j < table.length && !table[j][1].value);
+        courseList.push(course);
+    }
+
+    // Experiment courses
+    if(generalData.length === 6) {
+        is_exp = true;
+        table = generalData[5];
+        for(let j = 1; j < table.length; ) {
+            let tr = table[j];
+            let course = new FullCourse();
+            // general attributes
+            [course.academy, course.course_code, course.course_name, course.hours_all, course.credit, course.is_exp] =
+                [academy, code, name, hours_all, credit, is_exp];
+            // specific attributes
+            [course.teacher, course.class_no, course.student_cnt, course.class_detail] =
+                [tr[2].value, tr[4].value, tr[5].value, ''];
+            // schedules
+            do{
+                course.schedule.push({
+                    weeks: table[j][6].value,
+                    classtime: table[j][7].value,
+                    classroom: table[j][8].value,
+                });
+                j++;
+            }
+            while(j < table.length && !table[j][2].value);
+            courseList.push(course);
+        }
+    }
+
+    return courseList;
+};
+
 async function synctest(){
     const Crawler = require('./crawler');
-    let crawler = new Crawler();
+    const assert = require('assert');
+    let crawler = new Crawler(null, '20151597');
     let parser = new Parser();
     console.time('parse');
 
-    await crawler.login('20151597', '976655');
+    await crawler.login('20151597', '6897223B257F99DE268F847034BB01');
 
     // let infoHtml = await crawler.info();
     // console.log(JSON.stringify(await parser.parseInfoFromHTML(infoHtml)));
-
-    // let tableHtml = await crawler.table('20170');
+    //
+    // let tableHtml = await crawler.table('20180');
     // console.log(JSON.stringify(await parser.parseTableFromHTML(tableHtml)));
-
-    // let examsHtml = await crawler.exams('20170');
+    //
+    // let examsHtml = await crawler.exams('20180');
     // console.log(JSON.stringify(await parser.parseExamsFromHTMLArr(examsHtml)));
+    //
+    // let gradeHtml = await crawler.grade();
+    // console.log(JSON.stringify(await parser.parseGradesFromHTML(gradeHtml)));
 
-    let gradeHtml = await crawler.grade();
-    console.log(JSON.stringify(await parser.parseGradesFromHTML(gradeHtml)));
+    let courseHtml = await crawler.course(378214);
+    let courseList = await parser.parseCourseFromHTML(courseHtml);
+    let expected = [ {
+        course_name: '计算力学', course_code: 'AEME30230', credit: '2.50', hours_all: '40.0',
+        teacher: '严波', class_no: '001', student_cnt: '54', class_detail: '16工程力学01 16工程力学02',
+        academy: '航空航天学院', is_exp: false,
+        schedule: [
+            { weeks: "6-15", classtime: "二[5-6节]", classroom: "A8312" },
+            { weeks: "6-15", classtime: "五[1-2节]", classroom: "A8312" }
+        ]
+    } ];
+    assert.deepEqual(courseList, expected);
 
-    let g = await parser.parseGradesFromHTML(gradeHtml);
+    const DB = require('./db');
+    let db = new DB();
+    await db.connect();
+
+    for(let course of courseList) {
+        db.addCourse(course);
+    }
+
+    courseHtml = await crawler.course('000486');
+    courseList = await parser.parseCourseFromHTML(courseHtml);
+    console.log(JSON.stringify(courseList, null, 4));
+
+    for(let course of courseList) {
+        db.addCourse(course);
+    }
 
     console.timeEnd('parse');
 }
 
 function asynctest(){
     const Crawler = require('./crawler');
-    let crawler = new Crawler();
+    let crawler = new Crawler(null, '20151597');
     let parser = new Parser();
     console.time('parseInfo');
     console.time('parseTable');
@@ -565,12 +687,12 @@ function asynctest(){
         console.timeEnd('parseInfo');
     });
 
-    crawler.table('20170').then(async tableHtml => {
+    crawler.table('20180').then(async tableHtml => {
         console.log(JSON.stringify(await parser.parseTableFromHTML(tableHtml)));
         console.timeEnd('parseTable');
     });
 
-    crawler.exams('20170').then(async examsHtml => {
+    crawler.exams('20180').then(async examsHtml => {
         console.log(JSON.stringify(await parser.parseExamsFromHTMLArr(examsHtml)));
         console.timeEnd('parseExams');
     });
@@ -579,6 +701,11 @@ function asynctest(){
         console.log(JSON.stringify(await parser.parseGradesFromHTML(gradeHtml)));
         console.timeEnd('parseGrade');
     });
+
+    // crawler.course(378214).then(async courseHtml => {
+    //     console.log(JSON.stringify(await parser.parseCourseFromHTML(courseHtml)));
+    //     console.timeEnd('parseGrade');
+    // });
 }
 
 // asynctest();

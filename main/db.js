@@ -56,27 +56,40 @@ DB.prototype.connect = async function connect(){
         this.client = await MongoClient.connect(url);
         this.db = this.client.db(dbName);
         this.userCol = this.db.collection('user');
-        if(this.db.collection('feedback') == null){
+        this.courseCol = this.db.collection('course');
+        if(!this.db.collection('feedback')){
             this.db.createCollection('feedback', null, (error, collection) => {
                 if(error){
                     reject(error);
                 }
             })
         }
-        if(this.db.collection('crash') == null){
+        if(!this.db.collection('crash')){
             this.db.createCollection('crash', null, (error, collection) => {
                 if(error){
                     reject(error);
                 }
             })
         }
-        if(this.userCol == null){
+        if(!this.userCol){
             this.db.createCollection('user', null, (error, collection) => {
                 if(error){
                     reject(error);
                 }
                 else{
                     self.userCol = collection;
+                    resolve(true);
+                }
+            })
+        }
+        else if(!this.courseCol){
+            this.db.createCollection('course', null, (error, collection) => {
+                if(error){
+                    reject(error);
+                }
+                else{
+                    self.courseCol = collection;
+                    self.courseCol.createIndex( { course_name: 1, teacher: 1, academy: 1 } );
                     resolve(true);
                 }
             })
@@ -262,6 +275,39 @@ DB.prototype.getGrade = async function getGrade(stunum){
         return user.grade;
     }
     return null;
+};
+
+DB.prototype.addCourse = async function addCourse(course){
+    let r = await this.courseCol.updateOne(
+        { course_code: course.course_code, class_no: course.class_no },
+        { $set: course }, { upsert: true });
+};
+
+DB.prototype.searchCourse = async function searchCourse(key, page=1){
+    if(!page || page < 1) page = 1;
+    return await this.courseCol
+        .find( {
+            $or: [
+                { teacher: key }, { course_name: { $regex: '.*' + key + '.*' } }
+            ]
+            // course_name: { $regex: '.*' + key + '.*' }
+        } )
+        .limit(config.QUERY_PAGE_SIZE)
+        .skip(config.QUERY_PAGE_SIZE * (page - 1))
+        .toArray();
+};
+
+DB.prototype.clearCourse = async function clearCourse(){
+    this.courseCol.remove( { } );
+};
+
+DB.prototype.getCourseByAcademy = async function searchCourse(academy, page=1){
+    if(!page || page < 1) page = 1;
+    return await this.courseCol
+        .find( { academy: academy } )
+        .limit(config.QUERY_PAGE_SIZE)
+        .skip(config.QUERY_PAGE_SIZE * (page - 1))
+        .toArray();
 };
 
 DB.prototype.setCookie = async function setCookie(stunum, password, host, cookie, last_login){
