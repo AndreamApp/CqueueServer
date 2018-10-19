@@ -291,7 +291,7 @@ DB.prototype.searchCourse = async function searchCourse(key, page=1){
                 { teacher: key }, { course_name: { $regex: '.*' + key + '.*' } }
             ]
             // course_name: { $regex: '.*' + key + '.*' }
-        } )
+        },{ projection:{ "_id": 0 } } )
         .limit(config.QUERY_PAGE_SIZE)
         .skip(config.QUERY_PAGE_SIZE * (page - 1))
         .toArray();
@@ -304,7 +304,7 @@ DB.prototype.clearCourse = async function clearCourse(){
 DB.prototype.getCourseByAcademy = async function searchCourse(academy, page=1){
     if(!page || page < 1) page = 1;
     return await this.courseCol
-        .find( { academy: academy } )
+        .find( { academy: academy }, { projection:{ "_id": 0 } } )
         .limit(config.QUERY_PAGE_SIZE)
         .skip(config.QUERY_PAGE_SIZE * (page - 1))
         .toArray();
