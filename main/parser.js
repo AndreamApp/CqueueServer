@@ -543,6 +543,9 @@ Parser.prototype.parseCourseFromHTML = async function parseCourseFromHTML(text){
     });
     // console.log(JSON.stringify(generalData, null, 4));
     let courseList = [];
+    if(generalData.length <= 2) { // Doesn's have any course schedule
+        return courseList;
+    }
     // Description
     let description = generalData[2][0][0].value;
 
@@ -714,38 +717,36 @@ async function crawlAllCourses() {
     const iconv = require('iconv-lite');
     const fs = require('fs');
     const sleep = ms => new Promise( res => setTimeout(res, ms));
-    let crawler = new Crawler('http://jxgl.cqu.edu.cn', '20151597');
+    let crawler = new Crawler('http://202.202.1.41', '20151597');
     await crawler.login('20151597', '6897223B257F99DE268F847034BB01');
     let parser = new Parser();
     let db = new DB();
     await db.connect();
-    db.clearCourse();
+    // db.clearCourse();
 
-    let i = 0;
     let content = fs.readFileSync('../courses.txt');
     let arr = iconv.decode(content, 'utf-8').split('\n');
-    for(let i = 0; i < arr.length; i++){
+    for(let i = 1617; i < arr.length; i++){
         let course = arr[i];
         if(course) {
             let id = course.split(' ')[0];
             console.log(i + ': ' +course);
-            i++;
 
-            let courseHtml = await crawler.course('000486');
+            let courseHtml = await crawler.course(id);
             let courseList = await parser.parseCourseFromHTML(courseHtml);
 
             for(let c of courseList) {
                 await db.addCourse(c);
             }
 
-            await sleep(2000);
+            await sleep(500);
         }
     }
 }
 
 // asynctest();
 // synctest();
-crawlAllCourses();
+// crawlAllCourses();
 
 // Exports
 module.exports = Parser;

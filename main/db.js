@@ -284,11 +284,11 @@ DB.prototype.addCourse = async function addCourse(course){
 };
 
 DB.prototype.searchCourse = async function searchCourse(key, page=1){
-    if(!page || page < 1) page = 1;
     return await this.courseCol
         .find( {
             $or: [
-                { teacher: key }, { course_name: { $regex: '.*' + key + '.*' } }
+                { teacher: key }, { course_name: { $regex: '.*' + key + '.*' } },
+                { course_code: { $regex: '.*' + key + '.*' } }
             ]
             // course_name: { $regex: '.*' + key + '.*' }
         },{ projection:{ "_id": 0 } } )
