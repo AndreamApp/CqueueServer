@@ -18,6 +18,9 @@ const api = require('../main/api');
 
 api.connect();
 
+function isPositiveInteger(n) {
+    return n >>> 0 === parseFloat(n);
+}
 
 router.get('/login', async function(req, res) {
     let stunum = req.query.stunum;
@@ -88,7 +91,7 @@ router.get('/getGrade', async function(req, res) {
 
 router.get('/searchCourse', async function(req, res) {
     let key = req.query.key, page = req.query.page;
-    if(!page || !Number.isInteger(page) || Number.parseInt(page) < 1) {
+    if(!page || !isPositiveInteger(page) || Number.parseInt(page) < 1) {
         page = 1;
     }
     let stunum = req.session.stunum;
@@ -99,7 +102,7 @@ router.get('/searchCourse', async function(req, res) {
 
 router.get('/getCourseByAcademy', async function(req, res) {
     let academy = req.query.academy, page = req.query.page;
-    if(!page || !Number.isInteger(page) || Number.parseInt(page) < 1) {
+    if(!page || !isPositiveInteger(page) || Number.parseInt(page) < 1) {
         page = 1;
     }
     let stunum = req.session.stunum;
